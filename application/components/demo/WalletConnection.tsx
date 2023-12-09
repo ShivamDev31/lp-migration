@@ -40,10 +40,10 @@ export default function WalletConnection() {
 
   return (
     <div className="mb-4 flex flex-col items-start flex-wrap">
-      <p className="text-sm text-muted-foreground">
+      {/* <p className="text-sm text-muted-foreground">
         1. Select connection options:
-      </p>
-      <div className="flex flex-row items-center gap-4 pt-4 pb-4 w-full mb-4 flex-wrap">
+      </p> */}
+      {/* <div className="flex flex-row items-center gap-4 pt-4 pb-4 w-full mb-4 flex-wrap">
         {Object.keys(options).map((option) => (
           <div key={option} className="flex gap-x-2 items-center ">
             <Checkbox
@@ -67,11 +67,11 @@ export default function WalletConnection() {
             </label>
           </div>
         ))}
-      </div>
+      </div> */}
 
-      <p className="text-sm text-muted-foreground pb-2">2. View the result:</p>
+      {/* <p className="text-sm text-muted-foreground pb-2">2. View the result:</p> */}
 
-      <ThirdwebProvider
+      {/* <ThirdwebProvider
         supportedWallets={
           selectedOptions.length === 0
             ? options["Browser Wallets"]
@@ -86,7 +86,7 @@ export default function WalletConnection() {
         clientId={process.env.NEXT_PUBLIC_THIRDWEB_API_KEY}
       >
         <ConnectWallet />
-      </ThirdwebProvider>
+      </ThirdwebProvider> */}
     </div>
   );
 }
