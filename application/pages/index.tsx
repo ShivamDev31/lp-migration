@@ -1,87 +1,150 @@
 import type { NextPage } from "next";
-import { useEffect, useState } from "react";
-import { buttonVariants } from "@/components/ui/button";
-import * as Select from "@radix-ui/react-select";
-
-import Link from "next/link";
-import WalletConnection from "@/components/demo/WalletConnection";
-import UserAuthentication from "@/components/demo/UserAuthentication";
-import DecentralizedStorage from "@/components/demo/DecentralizedStorage";
-import ContractInteraction from "@/components/demo/ContractInteraction";
-import { DropdownMenuItem } from "@thirdweb-dev/react/dist/declarations/src/wallet/ConnectWallet/Details";
+import { useEffect, useMemo, useState } from "react";
 import Dropdown from "@/components/ui/dropdown";
 import { Option } from "../interfaces";
 import {
-  selectProtocol,
-  selectLpPairAddress,
+  selectFromProtocol,
+  selectToProtocol,
+  selectLpToPairAddress,
+  selectLpFromPairAddress,
 } from "../redux/slices/dropdownSlice";
 
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
-// import { selectProtocol } from "../redux/slices/dropdownSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { protocols } from "../const/protocols";
-import RangeSelector from "@/components/ui/range-selector";
+import { ProtocolVersion, protocols } from "../const/protocols";
 import PriceComponent from "@/components/ui/price-component";
 import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
-
-type PricesState = {
-  minPrice: number;
-  maxPrice: number;
-};
+import { useChainId } from "@thirdweb-dev/react";
+import { ethers } from "ethers";
 
 const Home: NextPage = () => {
   const dispatch = useDispatch();
-  const selectedProtocol = useSelector(
-    (state: RootState) => state.dropdown.selectedProtocol
+  const chainId = useChainId();
+  const selectedFromProtocol = useSelector(
+    (state: RootState) => state.dropdown.selectedFromProtocol
   );
-  const [lpPairOptions, setLpPairOptions] = useState<Option[]>([]);
+  const selectedToProtocol = useSelector(
+    (state: RootState) => state.dropdown.selectedToProtocol
+  );
+  const [lpFromPairOptions, setLpFromPairOptions] = useState<Option[]>([]);
+  const [lpToPairOptions, setLpToPairOptions] = useState<Option[]>([]);
+  const [selectedLpPair, setSelectedLpPair] = useState<string>("");
 
-  useEffect(() => {
-    if (selectedProtocol && typeof selectedProtocol.value === "string") {
-      if (selectedProtocol.value in protocols) {
-        const selectedProtocolData = protocols[selectedProtocol.value];
-
-        if ("pairs" in selectedProtocolData) {
-          const pairs = selectedProtocolData.pairs;
-          const pairOptions = Object.keys(pairs).map((pairKey) => ({
-            label: pairKey,
-            value: pairs[pairKey]["pair-address"],
-          }));
-
-          setLpPairOptions(pairOptions);
-
-          if (pairOptions.length > 0) {
-            const firstPairAddress = pairOptions[0].value;
-            dispatch(selectLpPairAddress(firstPairAddress));
+  const loadLpPairOptions = (
+    selectedProtocolKey: string,
+    setLpPairOptions: React.Dispatch<React.SetStateAction<Option[]>>
+  ) => {
+    if (chainId) {
+      const chainProtocols = protocols[chainId.toString()];
+      if (chainProtocols) {
+        ["v2", "v3"].forEach((version) => {
+          const versionProtocols = chainProtocols[version];
+          if (versionProtocols) {
+            const selectedProtocolData = versionProtocols[selectedProtocolKey];
+            if (selectedProtocolData && selectedProtocolData.pairs) {
+              const pairs = selectedProtocolData.pairs;
+              const pairOptions = Object.entries(pairs).map(([key, value]) => ({
+                label: `${value.token0.name}/${value.token1.name}`,
+                value: key,
+              }));
+              setLpPairOptions(pairOptions);
+            } else {
+              setLpPairOptions([]);
+            }
           }
-        } else {
-          setLpPairOptions([]);
-        }
+        });
       }
     }
-  }, [selectedProtocol, dispatch]);
-
-  const handleProtocolSelect = (value: string) => {
-    dispatch(selectProtocol({ label: value, value }));
   };
 
-  const handleLpPairSelect = (address: string) => {
-    dispatch(selectLpPairAddress(address));
+  useEffect(() => {
+    if (selectedFromProtocol?.value) {
+      loadLpPairOptions(selectedFromProtocol.value, setLpFromPairOptions);
+    }
+    if (selectedToProtocol?.value) {
+      loadLpPairOptions(selectedToProtocol.value, setLpToPairOptions);
+    }
+  }, [selectedFromProtocol, selectedToProtocol, chainId]);
+
+  const handleProtocolSelect = (value: string, type: "from" | "to") => {
+    const action = type === "from" ? selectFromProtocol : selectToProtocol;
+    dispatch(action({ label: value, value }));
   };
 
-  const protocolOptions = Object.keys(protocols).map((key) => ({
-    label: key,
-    value: key,
-  }));
-
-  const handleClick = () => {
-    console.log("vlaue");
+  const handleLpPairSelect = (address: string, type: "from" | "to") => {
+    if (type === "from") {
+      setSelectedLpPair(address);
+      dispatch(selectLpFromPairAddress(address));
+      dispatch(selectLpToPairAddress(address));
+    }
   };
+
+  // const generateProtocolOptions = (
+  //   chainProtocols: any,
+  //   isToDropdown: boolean = false
+  // ) => {
+  //   const options: Option[] = [];
+  //   if (chainProtocols && typeof chainProtocols === "object") {
+  //     Object.entries(chainProtocols).forEach(([versionKey, versionValue]) => {
+  //       if (isToDropdown && versionKey !== "v3") return;
+  //       if (typeof versionValue === "object" && versionValue !== null) {
+  //         Object.entries(versionValue).forEach(([protocolKey, protocolData]) => {
+  //           if (protocolData && typeof protocolData === "object" && "name" in protocolData) {
+  //             options.push({ label: protocolData.name, value: protocolKey });
+  //           }
+  //         });
+  //       }
+  //     });
+  //   }
+  //   return options;
+  // };
+
+  const generateProtocolOptions = (
+    chainProtocols: any,
+    isToDropdown: boolean = false
+  ) => {
+    const options: Option[] = [];
+    if (chainProtocols && typeof chainProtocols === "object") {
+      Object.entries(chainProtocols).forEach(([versionKey, versionValue]) => {
+        if (isToDropdown && versionKey !== "v3") return;
+
+        if (typeof versionValue === "object" && versionValue !== null) {
+          Object.entries(versionValue).forEach(
+            ([protocolKey, protocolData]) => {
+              if (
+                protocolData &&
+                typeof protocolData === "object" &&
+                "name" in protocolData
+              ) {
+                // Exclude the selected "From" protocol for the "To" dropdown
+                if (
+                  !isToDropdown ||
+                  (isToDropdown && protocolKey !== selectedFromProtocol?.value)
+                ) {
+                  options.push({
+                    label: protocolData.name,
+                    value: protocolKey,
+                  });
+                }
+              }
+            }
+          );
+        }
+      });
+    }
+    return options;
+  };
+
+  const chainProtocols = protocols[chainId?.toString()] as ProtocolVersion;
+  const fromProtocolOptions = chainProtocols
+    ? generateProtocolOptions(chainProtocols)
+    : [];
+  const toProtocolOptions = chainProtocols
+    ? generateProtocolOptions(chainProtocols, true)
+    : [];
 
   const prices = useSelector((state: RootState) => state.prices);
-
-
 
   const handleMinPriceChange = (delta: number): void => {
     dispatch(setMinPrice(prices.minPrice + delta));
@@ -91,23 +154,34 @@ const Home: NextPage = () => {
     dispatch(setMaxPrice(prices.maxPrice + delta));
   };
 
+  
+
+  const handleClick = () => {};
+
+
+  const handleMigrate = async () => {
+     const positionManager = await ethers.getContractAt(
+       "PositionManager",
+       positionManagerAddress
+     );
+  }
   return (
     <div className="w-full mx-auto max-w-2xl relative mt-32">
       <div className="flex flex-col justify-between items-center h-auto bg-[#fefeff] rounded-lg p-8">
         <div className="flex justify-around items-center w-full mb-8">
-          <div>
+          <div className="">
             <p> From </p>
             <Dropdown
-              options={protocolOptions}
-              onSelect={handleProtocolSelect}
+              options={fromProtocolOptions}
+              onSelect={(value) => handleProtocolSelect(value, "from")}
               placeholder="Select Protocol"
             />
           </div>
           <div>
             <p>Select Pair</p>
             <Dropdown
-              options={lpPairOptions}
-              onSelect={handleLpPairSelect}
+              options={lpFromPairOptions}
+              onSelect={(address) => handleLpPairSelect(address, "from")}
               placeholder="Select LP Pair"
             />
           </div>
@@ -117,21 +191,28 @@ const Home: NextPage = () => {
           <div>
             <p> To </p>
             <Dropdown
-              options={protocolOptions}
-              onSelect={handleProtocolSelect}
+              options={toProtocolOptions}
+              onSelect={(value) => handleProtocolSelect(value, "to")}
               placeholder="Select Protocol"
             />
           </div>
           <div>
             <p>Select Pair</p>
             <Dropdown
-              options={lpPairOptions}
-              onSelect={handleLpPairSelect}
+              options={lpFromPairOptions} 
+              onSelect={() => {}} 
               placeholder="Select LP Pair"
+              value={selectedLpPair} 
+              disabled={true} 
             />
           </div>
         </div>
-        <div className="flex justify-between gap-x-4">
+        <div className="flex justify-between my-2">
+          <p className="p-2">Current Price:</p>
+          <p className="p-2"> 122r per eth</p>
+        </div>
+        <p>{chainId}</p>
+        <div className="flex justify-evenly gap-x-4 w-full">
           <PriceComponent
             label="Min Price"
             value={prices.minPrice}

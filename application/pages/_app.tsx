@@ -7,11 +7,12 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { Provider } from "react-redux";
 import store from "../redux/store";
+import { Polygon, Binance } from "@thirdweb-dev/chains";
 
 const inter = Inter({ subsets: ["latin"] });
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return (    
+  return (
     <Provider store={store}>
       <div className={inter.className}>
         <Head>
@@ -22,12 +23,14 @@ function MyApp({ Component, pageProps }: AppProps) {
         </Head>
         <main className="">
           <ThirdwebProvider
-            activeChain={CHAIN}
+            activeChain={Polygon}
+            supportedChains={[Polygon, Binance]}
             authConfig={{
-              domain: process.env.NEXT_PUBLIC_AUTH_DOMAIN || "evmkit.com",
+              domain: "LP Provider",
               authUrl: "/api/auth",
             }}
             clientId={process.env.NEXT_PUBLIC_THIRDWEB_API_KEY}
+            autoConnect={true}
           >
             <Nav />
             <Component {...pageProps} />

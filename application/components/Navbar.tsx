@@ -44,22 +44,24 @@ export function Nav() {
       <nav className="flex items-center justify-between w-full max-w-7xl py-5 px-4 border-b-2">
         <div className="flex justify-between items-center w-full">
           <h1>LP Migration</h1>
-          <ThirdwebProvider
-            supportedWallets={
-              selectedOptions.length === 0
-                ? options["Browser Wallets"]
-                : [
-                    // For each selected option, spread the array of wallets into the supportedWallets array
-                    ...selectedOptions
-                      .map((option) => options[option as keyof typeof options])
-                      .flat(),
-                  ]
-            }
+          {/* <ThirdwebProvider
+            // supportedWallets={
+            //   selectedOptions.length === 0
+            //     ? options["Browser Wallets"]
+            //     : [
+            //         // For each selected option, spread the array of wallets into the supportedWallets array
+            //         ...selectedOptions
+            //           .map((option) => options[option as keyof typeof options])
+            //           .flat(),
+            //       ]
+            // }
+            supportedWallets={[metamaskWallet()]}
             activeChain={CHAIN}
             clientId={process.env.NEXT_PUBLIC_THIRDWEB_API_KEY}
           >
-            <ConnectWallet />
-          </ThirdwebProvider>
+            <ConnectWallet hideTestnetFaucet={false} theme="light" />
+          </ThirdwebProvider> */}
+          <ConnectWallet hideTestnetFaucet={false} theme="light" />
         </div>
       </nav>
     </div>
