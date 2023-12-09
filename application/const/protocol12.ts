@@ -126,26 +126,27 @@ export const protocols: Protocols = {
               address: "0x55d398326f99059ff775485246999027b3197955",
             },
           },
-          "usdt-usdc": {
-            fee: {
-              percent: "0.01",
-              value: 100,
-            },
+          // "usdt-usdc": {
+          //   fee: [
+          //     {
+          //       percent: "0.01",
+          //       value: 100,
+          //     },
+          //   ],
+          //   name: "usdt/usdc",
 
-            name: "usdt/usdc",
-
-            address: "0x92b7807bf19b7dddf89b706143896d05228f3121",
-            token0: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059fF775485246999027B3197955",
-            },
-            token1: {
-              name: "usdc",
-              decimal: 18,
-              address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-            },
-          },
+          //   address: "0x92b7807bf19b7dddf89b706143896d05228f3121",
+          //   token0: {
+          //     name: "usdt",
+          //     decimal: 18,
+          //     address: "0x55d398326f99059fF775485246999027B3197955",
+          //   },
+          //   token1: {
+          //     name: "usdc",
+          //     decimal: 18,
+          //     address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+          //   },
+          // },
         },
       },
       "uniswap-v3": {
@@ -213,8 +214,7 @@ export const protocols: Protocols = {
   "137": {
     v2: {
       "sushiswap-v2": {
-        name: "sushiswap-v2",
-
+        name: "sushiswap-v3",
         routerAddress: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
         pairs: {
           "wmatic-usdt": {

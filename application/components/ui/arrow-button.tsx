@@ -8,7 +8,7 @@ interface ArrowButtonProps {
 const ArrowButton: React.FC<ArrowButtonProps> = ({ onClick }) => {
   return (
     <button
-      onClick={onClick}
+      // onClick={onClick}
       className="p-4 rounded-full bg-[#f7f7f7]  focus:outline-none focus:ring-2  focus:ring-opacity-50"
       type="button"
     >

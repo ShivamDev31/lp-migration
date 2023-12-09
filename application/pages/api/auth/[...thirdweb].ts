@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 
 export const { ThirdwebAuthHandler, getUser } = ThirdwebAuth({
   // Use the domain from the environment or default to evmkit.com
-  domain: process.env.NEXT_PUBLIC_AUTH_DOMAIN || "evmkit.com",
+  domain: "LP Migrator",
 
   // Use the private key from the environment or generate a random one
   wallet: process.env.THIRDWEB_AUTH_PRIVATE_KEY

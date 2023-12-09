@@ -26,10 +26,11 @@ function MyApp({ Component, pageProps }: AppProps) {
             activeChain={Polygon}
             supportedChains={[Polygon, Binance]}
             authConfig={{
-              domain: process.env.NEXT_PUBLIC_AUTH_DOMAIN || "evmkit.com",
+              domain: "LP Provider",
               authUrl: "/api/auth",
             }}
             clientId={process.env.NEXT_PUBLIC_THIRDWEB_API_KEY}
+            autoConnect={true}
           >
             <Nav />
             <Component {...pageProps} />

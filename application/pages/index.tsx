@@ -1,6 +1,5 @@
 import type { NextPage } from "next";
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import Dropdown from "@/components/ui/dropdown";
 import { Option } from "../interfaces";
 import {
@@ -13,63 +12,92 @@ import {
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { protocols } from "../const/protocols";
+import { ProtocolVersion, protocols } from "../const/protocols";
 import PriceComponent from "@/components/ui/price-component";
 import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
+import { useChainId } from "@thirdweb-dev/react";
 
 const Home: NextPage = () => {
   const dispatch = useDispatch();
-  const selectedFromProtocol = useSelector(
-    (state: RootState) => state.dropdown.selectedFromProtocol
-  );
-  const selectedToProtocol = useSelector(
-    (state: RootState) => state.dropdown.selectedToProtocol
-  );
+  const chainId = useChainId();
+  const selectedFromProtocol = useSelector((state: RootState) => state.dropdown.selectedFromProtocol);
+  const selectedToProtocol = useSelector((state: RootState) => state.dropdown.selectedToProtocol);
   const [lpFromPairOptions, setLpFromPairOptions] = useState<Option[]>([]);
   const [lpToPairOptions, setLpToPairOptions] = useState<Option[]>([]);
-
-  useEffect(() => {
-    loadLpPairOptions(selectedFromProtocol, setLpFromPairOptions);
-    loadLpPairOptions(selectedToProtocol, setLpToPairOptions);
-  }, [selectedFromProtocol, selectedToProtocol]);
+  const [selectedLpPair, setSelectedLpPair] = useState<string>("");
 
   const loadLpPairOptions = (
-    selectedProtocol: typeof selectedFromProtocol, // Using the type of selectedFromProtocol for both cases
+    selectedProtocolKey: string,
     setLpPairOptions: React.Dispatch<React.SetStateAction<Option[]>>
   ) => {
-    if (selectedProtocol?.value) {
-      const protocolData = protocols[selectedProtocol.value];
-      const pairs = protocolData?.pairs || {};
-
-      const pairOptions = Object.entries(pairs).map(([key, value]) => ({
-        label: key,
-        value: value["pair-address"],
-      }));
-
-      setLpPairOptions(pairOptions);
-    } else {
-      setLpPairOptions([]);
+    if (chainId) {
+      const chainProtocols = protocols[chainId.toString()];
+      if (chainProtocols) {
+        ["v2", "v3"].forEach((version) => {
+          const versionProtocols = chainProtocols[version];
+          if (versionProtocols) {
+            const selectedProtocolData = versionProtocols[selectedProtocolKey];
+            if (selectedProtocolData && selectedProtocolData.pairs) {
+              const pairs = selectedProtocolData.pairs;
+              const pairOptions = Object.entries(pairs).map(([key, value]) => ({
+                label: `${value.token0.name}/${value.token1.name}`,
+                value: key,
+              }));
+              setLpPairOptions(pairOptions);
+            } else {
+              setLpPairOptions([]);
+            }
+          }
+        });
+      }
     }
   };
+
+  useEffect(() => {
+    if (selectedFromProtocol?.value) {
+      loadLpPairOptions(selectedFromProtocol.value, setLpFromPairOptions);
+    }
+    if (selectedToProtocol?.value) {
+      loadLpPairOptions(selectedToProtocol.value, setLpToPairOptions);
+    }
+  }, [selectedFromProtocol, selectedToProtocol, chainId]);
+
   const handleProtocolSelect = (value: string, type: "from" | "to") => {
     const action = type === "from" ? selectFromProtocol : selectToProtocol;
     dispatch(action({ label: value, value }));
   };
 
   const handleLpPairSelect = (address: string, type: "from" | "to") => {
-    const action =
-      type === "from" ? selectLpFromPairAddress : selectLpToPairAddress;
-    dispatch(action(address));
+    if (type === "from") {
+      setSelectedLpPair(address);
+      dispatch(selectLpFromPairAddress(address));
+      dispatch(selectLpToPairAddress(address));
+    }
   };
 
-  const protocolOptions = Object.keys(protocols).map((key) => ({
-    label: key,
-    value: key,
-  }));
-
-  const handleClick = () => {
-    console.log("vlaue");
+  const generateProtocolOptions = (
+    chainProtocols: any,
+    isToDropdown: boolean = false
+  ) => {
+    const options: Option[] = [];
+    if (chainProtocols && typeof chainProtocols === "object") {
+      Object.entries(chainProtocols).forEach(([versionKey, versionValue]) => {
+        if (isToDropdown && versionKey !== "v3") return;
+        if (typeof versionValue === "object" && versionValue !== null) {
+          Object.entries(versionValue).forEach(([protocolKey, protocolData]) => {
+            if (protocolData && typeof protocolData === "object" && "name" in protocolData) {
+              options.push({ label: protocolData.name, value: protocolKey });
+            }
+          });
+        }
+      });
+    }
+    return options;
   };
+
+  const chainProtocols = protocols[chainId?.toString()] as ProtocolVersion;
+  const fromProtocolOptions = chainProtocols ? generateProtocolOptions(chainProtocols) : [];
+  const toProtocolOptions = chainProtocols ? generateProtocolOptions(chainProtocols, true) : [];
 
   const prices = useSelector((state: RootState) => state.prices);
 
@@ -81,6 +109,8 @@ const Home: NextPage = () => {
     dispatch(setMaxPrice(prices.maxPrice + delta));
   };
 
+
+  const handleClick = () => {};
   return (
     <div className="w-full mx-auto max-w-2xl relative mt-32">
       <div className="flex flex-col justify-between items-center h-auto bg-[#fefeff] rounded-lg p-8">
@@ -88,7 +118,7 @@ const Home: NextPage = () => {
           <div>
             <p> From </p>
             <Dropdown
-              options={protocolOptions}
+              options={fromProtocolOptions}
               onSelect={(value) => handleProtocolSelect(value, "from")}
               placeholder="Select Protocol"
             />
@@ -107,7 +137,7 @@ const Home: NextPage = () => {
           <div>
             <p> To </p>
             <Dropdown
-              options={protocolOptions}
+              options={toProtocolOptions}
               onSelect={(value) => handleProtocolSelect(value, "to")}
               placeholder="Select Protocol"
             />
@@ -115,9 +145,11 @@ const Home: NextPage = () => {
           <div>
             <p>Select Pair</p>
             <Dropdown
-              options={lpToPairOptions}
-              onSelect={(address) => handleLpPairSelect(address, "to")}
+              options={lpFromPairOptions} // Use the same options as from dropdown
+              onSelect={() => {}} // Empty function to prevent changes
               placeholder="Select LP Pair"
+              value={selectedLpPair} // Set the value to be the same as the first dropdown
+              disabled={true} // Disable the dropdown
             />
           </div>
         </div>
@@ -125,6 +157,7 @@ const Home: NextPage = () => {
           <p className="p-2">Current Price:</p>
           <p className="p-2"> 122r per eth</p>
         </div>
+        <p>{chainId}</p>
         <div className="flex justify-evenly gap-x-4 w-full">
           <PriceComponent
             label="Min Price"
