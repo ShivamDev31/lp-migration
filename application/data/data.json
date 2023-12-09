@@ -1,0 +1,52 @@
+{
+  "v2": {
+    "56": {
+      "pancake-v2": {
+        "name": "PancakeSwapV2",
+        "routerAddress": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+        "pairs": {
+          "weth-usdt": {
+            "name": "weth/usdt",
+            "address": "0x531febfeb9a61d948c384acfbe6dcc51057aea7e",
+            "token0": {
+              "name": "weth",
+              "decimal": 18,
+              "address": "0x2170ed0880ac9a755fd29b2688956bd959f933f8"
+            },
+            "token1": {
+              "name": "usdt",
+              "decimal": 18,
+              "address": "0x55d398326f99059ff775485246999027b3197955"
+            }
+          }
+        }
+      }
+    }
+  },
+  "v3": {
+    "56": {
+      "name": "PancakeSwapV3",
+      "positionManagerAddress": "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
+      "pairs": {
+        "weth-usdt": {
+          "fee": {
+            "percent": "0.05",
+            "value": 500
+          },
+          "name": "weth/usdt",
+          "address": "0xbe141893e4c6ad9272e8c04bab7e6a10604501a5",
+          "token0": {
+            "name": "weth",
+            "decimal": 18,
+            "address": "0x2170ed0880ac9a755fd29b2688956bd959f933f8"
+          },
+          "token1": {
+            "name": "usdt",
+            "decimal": 18,
+            "address": "0x55d398326f99059ff775485246999027b3197955"
+          }
+        }
+      }
+    }
+  }
+}
