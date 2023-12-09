@@ -13,8 +13,6 @@ const inter = Inter({ subsets: ["latin"] });
 function MyApp({ Component, pageProps }: AppProps) {
   return (    
     <Provider store={store}>
-      {" "}
-      {/* Wrap with Redux Provider */}
       <div className={inter.className}>
         <Head>
           <title>LP Frontend</title>
@@ -22,7 +20,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <main>
+        <main className="">
           <ThirdwebProvider
             activeChain={CHAIN}
             authConfig={{

@@ -15,11 +15,11 @@ const PriceComponent: React.FC<PriceComponentProps> = ({
   onIncrease,
   onDecrease,
 }) => {
-  const buttonStyle = "rounded-full border border-cyan-500 text-cyan-500 p-1";
-  const svgStyle = "h-4 w-4";
+  const buttonStyle = "rounded-full border border-gray-500  p-1";
+  const svgStyle = "h-4 w-4 ";
   return (
-    <div className="bg-black rounded-lg p-2 flex items-center justify-between border border-1 border-white w-32">
-      <div className="text-white flex flex-col items-center ">
+    <div className="bg-[#f7f7f7] rounded-lg p-2 flex items-center justify-between border border-1 border-white w-32">
+      <div className=" flex flex-col items-center ">
         <div className="text-xs mb-1">{label}</div>
         <div className="flex items-baseline justify-between gap-x-3">
           <button className={buttonStyle} onClick={onDecrease}>

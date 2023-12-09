@@ -9,12 +9,12 @@ const ArrowButton: React.FC<ArrowButtonProps> = ({ onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="p-2 rounded-md bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+      className="p-4 rounded-full bg-[#f7f7f7]  focus:outline-none focus:ring-2  focus:ring-opacity-50"
       type="button"
     >
       <svg
-        width="15"
-        height="15"
+        width="25"
+        height="25"
         viewBox="0 0 15 15"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

@@ -23,6 +23,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { protocols } from "../const/protocols";
 import RangeSelector from "@/components/ui/range-selector";
 import PriceComponent from "@/components/ui/price-component";
+import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
+
+type PricesState = {
+  minPrice: number;
+  maxPrice: number;
+};
 
 const Home: NextPage = () => {
   const dispatch = useDispatch();
@@ -45,7 +51,6 @@ const Home: NextPage = () => {
 
           setLpPairOptions(pairOptions);
 
-          // Automatically select the first pair address if pair options are available
           if (pairOptions.length > 0) {
             const firstPairAddress = pairOptions[0].value;
             dispatch(selectLpPairAddress(firstPairAddress));
@@ -70,64 +75,88 @@ const Home: NextPage = () => {
     value: key,
   }));
 
-  const handleClick = (value: any) => {
-    console.log("vlaue", value);
+  const handleClick = () => {
+    console.log("vlaue");
   };
 
-  const [price, setPrice] = useState(63);
-  // The state to hold the price value
+  const prices = useSelector((state: RootState) => state.prices);
 
-  const [maxPrice, setMaxPrice] = useState(100);
 
-  // Function to handle the increase action
-  const handleIncrease = () => {
-    setPrice((prevPrice) => prevPrice + 1); // Increment the price by 1 (or your desired step)
+
+  const handleMinPriceChange = (delta: number): void => {
+    dispatch(setMinPrice(prices.minPrice + delta));
   };
 
-  // Function to handle the decrease action
-  const handleDecrease = () => {
-    setPrice((prevPrice) => prevPrice - 1); // Decrement the price by 1 (or your desired step)
+  const handleMaxPriceChange = (delta: number): void => {
+    dispatch(setMaxPrice(prices.maxPrice + delta));
   };
 
   return (
     <div className="w-full mx-auto max-w-2xl relative mt-32">
-      <div className="flex flex-col justify-between items-center h-auto bg-slate-400 rounded-lg p-8">
+      <div className="flex flex-col justify-between items-center h-auto bg-[#fefeff] rounded-lg p-8">
         <div className="flex justify-around items-center w-full mb-8">
-          <Dropdown
-            options={protocolOptions}
-            onSelect={handleProtocolSelect}
-            placeholder="Select Protocol"
-          />
-          <Dropdown
-            options={lpPairOptions}
-            onSelect={handleLpPairSelect}
-            placeholder="Select LP Pair"
-          />
+          <div>
+            <p> From </p>
+            <Dropdown
+              options={protocolOptions}
+              onSelect={handleProtocolSelect}
+              placeholder="Select Protocol"
+            />
+          </div>
+          <div>
+            <p>Select Pair</p>
+            <Dropdown
+              options={lpPairOptions}
+              onSelect={handleLpPairSelect}
+              placeholder="Select LP Pair"
+            />
+          </div>
         </div>
         <ArrowButton onClick={handleClick} />
-        {/* <RangeSelector /> */}
-
-        <div className="flex justify-around items-center w-full mt-8">
-          {/* <Dropdown options={options} onSelect={handleSelect} />
-          <Dropdown options={options} onSelect={handleSelect} /> */}
+        <div className="flex justify-around items-center w-full mb-8">
+          <div>
+            <p> To </p>
+            <Dropdown
+              options={protocolOptions}
+              onSelect={handleProtocolSelect}
+              placeholder="Select Protocol"
+            />
+          </div>
+          <div>
+            <p>Select Pair</p>
+            <Dropdown
+              options={lpPairOptions}
+              onSelect={handleLpPairSelect}
+              placeholder="Select LP Pair"
+            />
+          </div>
         </div>
-      </div>
-      <div className="flex">
-        <PriceComponent
-          label="Min Price"
-          value={price}
-          unit="CAKE per BNB"
-          onIncrease={handleIncrease}
-          onDecrease={handleDecrease}
-        />
+        <div className="flex justify-between gap-x-4">
+          <PriceComponent
+            label="Min Price"
+            value={prices.minPrice}
+            unit="CAKE per BNB"
+            onIncrease={() => handleMinPriceChange(1)}
+            onDecrease={() => handleMinPriceChange(-1)}
+          />
+          <PriceComponent
+            label="Max Price"
+            value={prices.maxPrice}
+            unit="CAKE per BNB"
+            onIncrease={() => handleMaxPriceChange(1)}
+            onDecrease={() => handleMaxPriceChange(-1)}
+          />
+        </div>
+        <button
+          className="
+        bg-[#27b992]
+        px-4 py-2 
+        rounded-md
 
-        {/* <PriceComponent
-          label="Max Price"
-          value={maxPrice}
-          unit="CAKE per BNB"
-          onIncrease={handleIncrease}
-          onDecrease={handleDecrease}
-        /> */}
+        "
+        >
+          migrate
+        </button>
       </div>
     </div>
   );
