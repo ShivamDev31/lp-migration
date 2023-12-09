@@ -16,12 +16,17 @@ import { ProtocolVersion, protocols } from "../const/protocols";
 import PriceComponent from "@/components/ui/price-component";
 import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
 import { useChainId } from "@thirdweb-dev/react";
+import { ethers } from "ethers";
 
 const Home: NextPage = () => {
   const dispatch = useDispatch();
   const chainId = useChainId();
-  const selectedFromProtocol = useSelector((state: RootState) => state.dropdown.selectedFromProtocol);
-  const selectedToProtocol = useSelector((state: RootState) => state.dropdown.selectedToProtocol);
+  const selectedFromProtocol = useSelector(
+    (state: RootState) => state.dropdown.selectedFromProtocol
+  );
+  const selectedToProtocol = useSelector(
+    (state: RootState) => state.dropdown.selectedToProtocol
+  );
   const [lpFromPairOptions, setLpFromPairOptions] = useState<Option[]>([]);
   const [lpToPairOptions, setLpToPairOptions] = useState<Option[]>([]);
   const [selectedLpPair, setSelectedLpPair] = useState<string>("");
@@ -75,6 +80,26 @@ const Home: NextPage = () => {
     }
   };
 
+  // const generateProtocolOptions = (
+  //   chainProtocols: any,
+  //   isToDropdown: boolean = false
+  // ) => {
+  //   const options: Option[] = [];
+  //   if (chainProtocols && typeof chainProtocols === "object") {
+  //     Object.entries(chainProtocols).forEach(([versionKey, versionValue]) => {
+  //       if (isToDropdown && versionKey !== "v3") return;
+  //       if (typeof versionValue === "object" && versionValue !== null) {
+  //         Object.entries(versionValue).forEach(([protocolKey, protocolData]) => {
+  //           if (protocolData && typeof protocolData === "object" && "name" in protocolData) {
+  //             options.push({ label: protocolData.name, value: protocolKey });
+  //           }
+  //         });
+  //       }
+  //     });
+  //   }
+  //   return options;
+  // };
+
   const generateProtocolOptions = (
     chainProtocols: any,
     isToDropdown: boolean = false
@@ -83,12 +108,28 @@ const Home: NextPage = () => {
     if (chainProtocols && typeof chainProtocols === "object") {
       Object.entries(chainProtocols).forEach(([versionKey, versionValue]) => {
         if (isToDropdown && versionKey !== "v3") return;
+
         if (typeof versionValue === "object" && versionValue !== null) {
-          Object.entries(versionValue).forEach(([protocolKey, protocolData]) => {
-            if (protocolData && typeof protocolData === "object" && "name" in protocolData) {
-              options.push({ label: protocolData.name, value: protocolKey });
+          Object.entries(versionValue).forEach(
+            ([protocolKey, protocolData]) => {
+              if (
+                protocolData &&
+                typeof protocolData === "object" &&
+                "name" in protocolData
+              ) {
+                // Exclude the selected "From" protocol for the "To" dropdown
+                if (
+                  !isToDropdown ||
+                  (isToDropdown && protocolKey !== selectedFromProtocol?.value)
+                ) {
+                  options.push({
+                    label: protocolData.name,
+                    value: protocolKey,
+                  });
+                }
+              }
             }
-          });
+          );
         }
       });
     }
@@ -96,8 +137,12 @@ const Home: NextPage = () => {
   };
 
   const chainProtocols = protocols[chainId?.toString()] as ProtocolVersion;
-  const fromProtocolOptions = chainProtocols ? generateProtocolOptions(chainProtocols) : [];
-  const toProtocolOptions = chainProtocols ? generateProtocolOptions(chainProtocols, true) : [];
+  const fromProtocolOptions = chainProtocols
+    ? generateProtocolOptions(chainProtocols)
+    : [];
+  const toProtocolOptions = chainProtocols
+    ? generateProtocolOptions(chainProtocols, true)
+    : [];
 
   const prices = useSelector((state: RootState) => state.prices);
 
@@ -109,13 +154,22 @@ const Home: NextPage = () => {
     dispatch(setMaxPrice(prices.maxPrice + delta));
   };
 
+  
 
   const handleClick = () => {};
+
+
+  const handleMigrate = async () => {
+     const positionManager = await ethers.getContractAt(
+       "PositionManager",
+       positionManagerAddress
+     );
+  }
   return (
     <div className="w-full mx-auto max-w-2xl relative mt-32">
       <div className="flex flex-col justify-between items-center h-auto bg-[#fefeff] rounded-lg p-8">
         <div className="flex justify-around items-center w-full mb-8">
-          <div>
+          <div className="">
             <p> From </p>
             <Dropdown
               options={fromProtocolOptions}
@@ -145,11 +199,11 @@ const Home: NextPage = () => {
           <div>
             <p>Select Pair</p>
             <Dropdown
-              options={lpFromPairOptions} // Use the same options as from dropdown
-              onSelect={() => {}} // Empty function to prevent changes
+              options={lpFromPairOptions} 
+              onSelect={() => {}} 
               placeholder="Select LP Pair"
-              value={selectedLpPair} // Set the value to be the same as the first dropdown
-              disabled={true} // Disable the dropdown
+              value={selectedLpPair} 
+              disabled={true} 
             />
           </div>
         </div>
