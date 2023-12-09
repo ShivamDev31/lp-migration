@@ -1,73 +1,65 @@
 import type { NextPage } from "next";
 import { useEffect, useState } from "react";
-import { buttonVariants } from "@/components/ui/button";
-import * as Select from "@radix-ui/react-select";
 
-import Link from "next/link";
-import WalletConnection from "@/components/demo/WalletConnection";
-import UserAuthentication from "@/components/demo/UserAuthentication";
-import DecentralizedStorage from "@/components/demo/DecentralizedStorage";
-import ContractInteraction from "@/components/demo/ContractInteraction";
-import { DropdownMenuItem } from "@thirdweb-dev/react/dist/declarations/src/wallet/ConnectWallet/Details";
 import Dropdown from "@/components/ui/dropdown";
 import { Option } from "../interfaces";
 import {
-  selectProtocol,
-  selectLpPairAddress,
+  selectFromProtocol,
+  selectToProtocol,
+  selectLpToPairAddress,
+  selectLpFromPairAddress,
 } from "../redux/slices/dropdownSlice";
 
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
-// import { selectProtocol } from "../redux/slices/dropdownSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { protocols } from "../const/protocols";
-import RangeSelector from "@/components/ui/range-selector";
 import PriceComponent from "@/components/ui/price-component";
 import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
 
-type PricesState = {
-  minPrice: number;
-  maxPrice: number;
-};
-
 const Home: NextPage = () => {
   const dispatch = useDispatch();
-  const selectedProtocol = useSelector(
-    (state: RootState) => state.dropdown.selectedProtocol
+  const selectedFromProtocol = useSelector(
+    (state: RootState) => state.dropdown.selectedFromProtocol
   );
-  const [lpPairOptions, setLpPairOptions] = useState<Option[]>([]);
+  const selectedToProtocol = useSelector(
+    (state: RootState) => state.dropdown.selectedToProtocol
+  );
+  const [lpFromPairOptions, setLpFromPairOptions] = useState<Option[]>([]);
+  const [lpToPairOptions, setLpToPairOptions] = useState<Option[]>([]);
 
   useEffect(() => {
-    if (selectedProtocol && typeof selectedProtocol.value === "string") {
-      if (selectedProtocol.value in protocols) {
-        const selectedProtocolData = protocols[selectedProtocol.value];
+    loadLpPairOptions(selectedFromProtocol, setLpFromPairOptions);
+    loadLpPairOptions(selectedToProtocol, setLpToPairOptions);
+  }, [selectedFromProtocol, selectedToProtocol]);
 
-        if ("pairs" in selectedProtocolData) {
-          const pairs = selectedProtocolData.pairs;
-          const pairOptions = Object.keys(pairs).map((pairKey) => ({
-            label: pairKey,
-            value: pairs[pairKey]["pair-address"],
-          }));
+  const loadLpPairOptions = (
+    selectedProtocol: typeof selectedFromProtocol, // Using the type of selectedFromProtocol for both cases
+    setLpPairOptions: React.Dispatch<React.SetStateAction<Option[]>>
+  ) => {
+    if (selectedProtocol?.value) {
+      const protocolData = protocols[selectedProtocol.value];
+      const pairs = protocolData?.pairs || {};
 
-          setLpPairOptions(pairOptions);
+      const pairOptions = Object.entries(pairs).map(([key, value]) => ({
+        label: key,
+        value: value["pair-address"],
+      }));
 
-          if (pairOptions.length > 0) {
-            const firstPairAddress = pairOptions[0].value;
-            dispatch(selectLpPairAddress(firstPairAddress));
-          }
-        } else {
-          setLpPairOptions([]);
-        }
-      }
+      setLpPairOptions(pairOptions);
+    } else {
+      setLpPairOptions([]);
     }
-  }, [selectedProtocol, dispatch]);
-
-  const handleProtocolSelect = (value: string) => {
-    dispatch(selectProtocol({ label: value, value }));
+  };
+  const handleProtocolSelect = (value: string, type: "from" | "to") => {
+    const action = type === "from" ? selectFromProtocol : selectToProtocol;
+    dispatch(action({ label: value, value }));
   };
 
-  const handleLpPairSelect = (address: string) => {
-    dispatch(selectLpPairAddress(address));
+  const handleLpPairSelect = (address: string, type: "from" | "to") => {
+    const action =
+      type === "from" ? selectLpFromPairAddress : selectLpToPairAddress;
+    dispatch(action(address));
   };
 
   const protocolOptions = Object.keys(protocols).map((key) => ({
@@ -80,8 +72,6 @@ const Home: NextPage = () => {
   };
 
   const prices = useSelector((state: RootState) => state.prices);
-
-
 
   const handleMinPriceChange = (delta: number): void => {
     dispatch(setMinPrice(prices.minPrice + delta));
@@ -99,15 +89,15 @@ const Home: NextPage = () => {
             <p> From </p>
             <Dropdown
               options={protocolOptions}
-              onSelect={handleProtocolSelect}
+              onSelect={(value) => handleProtocolSelect(value, "from")}
               placeholder="Select Protocol"
             />
           </div>
           <div>
             <p>Select Pair</p>
             <Dropdown
-              options={lpPairOptions}
-              onSelect={handleLpPairSelect}
+              options={lpFromPairOptions}
+              onSelect={(address) => handleLpPairSelect(address, "from")}
               placeholder="Select LP Pair"
             />
           </div>
@@ -118,20 +108,24 @@ const Home: NextPage = () => {
             <p> To </p>
             <Dropdown
               options={protocolOptions}
-              onSelect={handleProtocolSelect}
+              onSelect={(value) => handleProtocolSelect(value, "to")}
               placeholder="Select Protocol"
             />
           </div>
           <div>
             <p>Select Pair</p>
             <Dropdown
-              options={lpPairOptions}
-              onSelect={handleLpPairSelect}
+              options={lpToPairOptions}
+              onSelect={(address) => handleLpPairSelect(address, "to")}
               placeholder="Select LP Pair"
             />
           </div>
         </div>
-        <div className="flex justify-between gap-x-4">
+        <div className="flex justify-between my-2">
+          <p className="p-2">Current Price:</p>
+          <p className="p-2"> 122r per eth</p>
+        </div>
+        <div className="flex justify-evenly gap-x-4 w-full">
           <PriceComponent
             label="Min Price"
             value={prices.minPrice}
