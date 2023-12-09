@@ -67,20 +67,6 @@ const Dropdown: React.FC<DropdownProps> = ({
           aria-labelledby="options-menu"
         >
           <div className="py-1" role="none">
-            {/* {placeholder && (
-              <a
-                href="#"
-                className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-                  !selectedOption ? "bg-gray-100" : ""
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleSelect(null);
-                }}
-              >
-                {placeholder}
-              </a>
-            )} */}
             {options.map((option) => (
               <a
                 key={option.value} // Use value for key since it should be unique
