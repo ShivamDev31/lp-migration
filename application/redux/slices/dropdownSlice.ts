@@ -3,12 +3,12 @@ import { Option } from "../../interfaces";
 
 interface DropdownState {
   selectedProtocol: Option | null;
-  lpPair: string|null;
+  selectedLpPairAddress: string | null;
 }
 
 const initialState: DropdownState = {
   selectedProtocol: null,
-  lpPair:null,
+  selectedLpPairAddress: null,
 };
 
 const dropdownSlice = createSlice({
@@ -17,12 +17,13 @@ const dropdownSlice = createSlice({
   reducers: {
     selectProtocol: (state, action: PayloadAction<Option>) => {
       state.selectedProtocol = action.payload;
+      state.selectedLpPairAddress = null; // Reset LP pair address when a new protocol is selected
     },
-    selectLpPair: (state, action: PayloadAction<string>) => {
-      state.lpPair = action.payload;
+    selectLpPairAddress: (state, action: PayloadAction<string>) => {
+      state.selectedLpPairAddress = action.payload;
     },
   },
 });
 
-export const { selectProtocol } = dropdownSlice.actions;
+export const { selectProtocol, selectLpPairAddress } = dropdownSlice.actions;
 export default dropdownSlice.reducer;

@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import * as Select from "@radix-ui/react-select";
 
@@ -11,72 +11,81 @@ import ContractInteraction from "@/components/demo/ContractInteraction";
 import { DropdownMenuItem } from "@thirdweb-dev/react/dist/declarations/src/wallet/ConnectWallet/Details";
 import Dropdown from "@/components/ui/dropdown";
 import { Option } from "../interfaces";
+import {
+  selectProtocol,
+  selectLpPairAddress,
+} from "../redux/slices/dropdownSlice";
+
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
-import { selectProtocol } from "../redux/slices/dropdownSlice";
+// import { selectProtocol } from "../redux/slices/dropdownSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { protocols } from "../const/protocols";
 
-const tabs = [
-  { name: "Wallet Connection", component: <WalletConnection /> },
-  { name: "Contract Interaction", component: <ContractInteraction /> },
-  { name: "User Authentication", component: <UserAuthentication /> },
-  { name: "Decentralized Storage", component: <DecentralizedStorage /> },
-];
-
 const Home: NextPage = () => {
-  // const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>(tabs[0]);
-  // const [selectedValue, setSelectedValue] = useState<string>("Apple");
-
-  // const handleSelect = (value: string) => {
-  //   setSelectedValue(value); // This will update the state with the selected value
-  //   console.log(`You have selected: ${value}`);
-  // };
-
   const dispatch = useDispatch();
-  // Use useSelector hook to get the selected value from the store
-  const selectedValue = useSelector(
-    (state: RootState) => state.dropdown.selectedProtocol?.label
+  const selectedProtocol = useSelector(
+    (state: RootState) => state.dropdown.selectedProtocol
   );
+  const [lpPairOptions, setLpPairOptions] = useState<Option[]>([]);
 
-  const handleSelect = (value: string) => {
-    // Dispatch an action to update the selected value in the Redux store
+  useEffect(() => {
+    if (selectedProtocol && typeof selectedProtocol.value === "string") {
+      if (selectedProtocol.value in protocols) {
+        const selectedProtocolData = protocols[selectedProtocol.value];
+
+        if ("pairs" in selectedProtocolData) {
+          const pairs = selectedProtocolData.pairs;
+          const pairOptions = Object.keys(pairs).map((pairKey) => ({
+            label: pairKey,
+            value: pairs[pairKey]["pair-address"],
+          }));
+
+          setLpPairOptions(pairOptions);
+
+          // Automatically select the first pair address if pair options are available
+          if (pairOptions.length > 0) {
+            const firstPairAddress = pairOptions[0].value;
+            dispatch(selectLpPairAddress(firstPairAddress));
+          }
+        } else {
+          setLpPairOptions([]);
+        }
+      }
+    }
+  }, [selectedProtocol, dispatch]);
+
+  const handleProtocolSelect = (value: string) => {
     dispatch(selectProtocol({ label: value, value }));
-    console.log(`You have selected: ${value}`);
-  };
-  const options: Option[] = [
-    { label: "Apple", value: "apple" },
-    { label: "Orange", value: "orange" },
-  ];
-
-  const handleClick = () => {
-    console.log("The button was clicked!");
-    // Define what should happen on click
   };
 
-  const convertProtocolsToOptions = (
-    protocols: Record<string, any>
-  ): Option[] => {
-    return Object.keys(protocols).map((key) => ({
-      label: key,
-      value: key,
-    }));
+  const handleLpPairSelect = (address: string) => {
+    dispatch(selectLpPairAddress(address));
   };
 
-  const options1 = convertProtocolsToOptions(protocols);
+  const protocolOptions = Object.keys(protocols).map((key) => ({
+    label: key,
+    value: key,
+  }));
+
+  const handleClick = (value: any) => {
+    console.log("vlaue", value);
+  };
+
   return (
-   
-
     <div className="w-full mx-auto max-w-2xl relative mt-32">
       <div className="flex flex-col justify-between items-center h-auto bg-slate-400 rounded-lg p-8">
         <div className="flex justify-around items-center w-full mb-8">
           <Dropdown
-            options={options1}
-            onSelect={handleSelect}
-            placeholder="To"
+            options={protocolOptions}
+            onSelect={handleProtocolSelect}
+            placeholder="Select Protocol"
           />
-
-          <Dropdown options={options} onSelect={handleSelect} />
+          <Dropdown
+            options={lpPairOptions}
+            onSelect={handleLpPairSelect}
+            placeholder="Select LP Pair"
+          />
         </div>
         <ArrowButton onClick={handleClick} />
         <div className="flex justify-around items-center w-full mt-8">
