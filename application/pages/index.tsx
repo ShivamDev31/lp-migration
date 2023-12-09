@@ -21,6 +21,8 @@ import { RootState } from "../redux/store";
 // import { selectProtocol } from "../redux/slices/dropdownSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { protocols } from "../const/protocols";
+import RangeSelector from "@/components/ui/range-selector";
+import PriceComponent from "@/components/ui/price-component";
 
 const Home: NextPage = () => {
   const dispatch = useDispatch();
@@ -72,6 +74,21 @@ const Home: NextPage = () => {
     console.log("vlaue", value);
   };
 
+  const [price, setPrice] = useState(63);
+  // The state to hold the price value
+
+  const [maxPrice, setMaxPrice] = useState(100);
+
+  // Function to handle the increase action
+  const handleIncrease = () => {
+    setPrice((prevPrice) => prevPrice + 1); // Increment the price by 1 (or your desired step)
+  };
+
+  // Function to handle the decrease action
+  const handleDecrease = () => {
+    setPrice((prevPrice) => prevPrice - 1); // Decrement the price by 1 (or your desired step)
+  };
+
   return (
     <div className="w-full mx-auto max-w-2xl relative mt-32">
       <div className="flex flex-col justify-between items-center h-auto bg-slate-400 rounded-lg p-8">
@@ -88,10 +105,29 @@ const Home: NextPage = () => {
           />
         </div>
         <ArrowButton onClick={handleClick} />
+        {/* <RangeSelector /> */}
+
         <div className="flex justify-around items-center w-full mt-8">
           {/* <Dropdown options={options} onSelect={handleSelect} />
           <Dropdown options={options} onSelect={handleSelect} /> */}
         </div>
+      </div>
+      <div className="flex">
+        <PriceComponent
+          label="Min Price"
+          value={price}
+          unit="CAKE per BNB"
+          onIncrease={handleIncrease}
+          onDecrease={handleDecrease}
+        />
+
+        {/* <PriceComponent
+          label="Max Price"
+          value={maxPrice}
+          unit="CAKE per BNB"
+          onIncrease={handleIncrease}
+          onDecrease={handleDecrease}
+        /> */}
       </div>
     </div>
   );
