@@ -22,7 +22,7 @@ interface Protocols {
   "uniswap v2": Protocol;
   "uniswap v3": Protocol; // Assuming "uniswap v3" has the same structure as "uniswap v2"
 }
-export const protocols = {
+export const protocols: Protocols = {
   "uniswap v2": {
     router: "",
     pairs: {
@@ -62,5 +62,43 @@ export const protocols = {
       },
     },
   },
-  "uniswap v3": {},
+  "uniswap v3": {
+    router: "",
+    pairs: {
+      "pk-usdt": {
+        "pair-address": "",
+        "token-0": {
+          contract: "0x4200000000000000000000000000000000000006",
+          name: "Wrapped Ether",
+          symbol: "WETH",
+          decimals: 18,
+          logo: "https://tokens.1inch.io/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.png",
+        },
+        "token-1": {
+          contract: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
+          name: "Tether USD",
+          symbol: "USDT",
+          decimals: 6,
+          logo: "https://tokens.1inch.io/0x94b008aa00579c1307b0ef2c499ad98a8ce58e58.png",
+        },
+      },
+      "pk-eth": {
+        "pair-address": "",
+        "token-0": {
+          contract: "0x4200000000000000000000000000000000000006",
+          name: "Wrapped Ether",
+          symbol: "WETH",
+          decimals: 18,
+          logo: "https://tokens.1inch.io/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.png",
+        },
+        "token-1": {
+          contract: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
+          name: "Tether USD",
+          symbol: "USDT",
+          decimals: 6,
+          logo: "https://tokens.1inch.io/0x94b008aa00579c1307b0ef2c499ad98a8ce58e58.png",
+        },
+      },
+    },
+  },
 };
