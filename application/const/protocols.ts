@@ -43,56 +43,7 @@ export const contractAddresses = {
 
 export const protocols: Protocols = {
   "137": {
-    v2: {
-      "sushiswap-v2": {
-        name: "SushiSwapV2",
-        routerAddress: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
-        pairs: {
-          "wmatic-usdt": {
-            name: "wmatic/usdt",
-            address: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 ",
-            token0: {
-              name: "wMatic",
-              decimal: 18,
-              address: "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
-            },
-            token1: {
-              name: "usdt",
-              decimal: 6,
-              address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-            },
-          },
-          "weth-usdt": {
-            name: "weth/usdt",
-            address: "0xc2755915a85c6f6c1c0f3a86ac8c058f11caa9c9",
-            token0: {
-              name: "weth",
-              decimal: 18,
-              address: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-            },
-            token1: {
-              name: "usdt",
-              decimal: 6,
-              address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-            },
-          },
-          "usdc-usdt": {
-            name: "usdc/usdt",
-            address: "0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001",
-            token0: {
-              name: "usdc",
-              decimal: 6,
-              address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-            },
-            token1: {
-              name: "usdt",
-              decimal: 6,
-              address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-            },
-          },
-        },
-      },
-    },
+    v2: {},
     v3: {
       "uniswap-v3": {
         name: "UniSwapV3",

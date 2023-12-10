@@ -505,24 +505,24 @@ const Home: NextPage = () => {
             />
           </div>
         </div>
-        <div className="flex justify-between my-2">
+        {/* <div className="flex justify-between my-2">
           <p className="p-2">Current Price:</p>
           <p className="p-2"> 122r per eth</p>
         </div>
         <p>{chainId}</p>
-        <p>{address}</p>
+        <p>{address}</p> */}
         <div className="flex justify-evenly gap-x-4 w-full">
           <PriceComponent
             label="Min Price"
             value={prices.minPrice}
-            unit="CAKE per BNB"
+            unit=""
             onIncrease={() => handleMinPriceChange(1)}
             onDecrease={() => handleMinPriceChange(-1)}
           />
           <PriceComponent
             label="Max Price"
             value={prices.maxPrice}
-            unit="CAKE per BNB"
+            unit=""
             onIncrease={() => handleMaxPriceChange(1)}
             onDecrease={() => handleMaxPriceChange(-1)}
           />
