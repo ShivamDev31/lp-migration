@@ -12,15 +12,23 @@ import {
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { ProtocolVersion, protocols } from "../const/protocols";
+import { Pair, ProtocolVersion, protocols } from "../const/protocols";
 import PriceComponent from "@/components/ui/price-component";
 import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
-import { useChainId } from "@thirdweb-dev/react";
-import { ethers } from "ethers";
-
+import { useAddress, useChainId } from "@thirdweb-dev/react";
+import { ethers, Contract, BigNumber } from "ethers";
+import LpMigrator from "../abi/LpMigrator.json";
+import INonfungiblePositionManagerABI from "../abi/PositionManager.json";
 const Home: NextPage = () => {
   const dispatch = useDispatch();
   const chainId = useChainId();
+  const address = useAddress();
+
+  // let chainIdString = chainId?.toString();
+
+  // Access the specific protocol version (e.g., 'v3') you need.
+  // const chainProtocolsV3 = chainIdString ? protocols[chainIdString]?.v3 : null;
+
   const selectedFromProtocol = useSelector(
     (state: RootState) => state.dropdown.selectedFromProtocol
   );
@@ -31,6 +39,22 @@ const Home: NextPage = () => {
   const [lpToPairOptions, setLpToPairOptions] = useState<Option[]>([]);
   const [selectedLpPair, setSelectedLpPair] = useState<string>("");
 
+  const chainIdString = chainId?.toString();
+  let chainProtocols: ProtocolVersion | undefined;
+
+  if (chainIdString && protocols[chainIdString]) {
+    chainProtocols = protocols[chainIdString].v3;
+  }
+
+  useEffect(() => {
+    if (selectedFromProtocol?.value && chainProtocols) {
+      loadLpPairOptions(selectedFromProtocol.value, setLpFromPairOptions);
+    }
+    if (selectedToProtocol?.value && chainProtocols) {
+      loadLpPairOptions(selectedToProtocol.value, setLpToPairOptions);
+    }
+  }, [selectedFromProtocol, selectedToProtocol, chainProtocols]);
+
   const loadLpPairOptions = (
     selectedProtocolKey: string,
     setLpPairOptions: React.Dispatch<React.SetStateAction<Option[]>>
@@ -39,15 +63,21 @@ const Home: NextPage = () => {
       const chainProtocols = protocols[chainId.toString()];
       if (chainProtocols) {
         ["v2", "v3"].forEach((version) => {
-          const versionProtocols = chainProtocols[version];
+          const versionProtocols =
+            chainProtocols[version as keyof typeof chainProtocols];
+
           if (versionProtocols) {
             const selectedProtocolData = versionProtocols[selectedProtocolKey];
             if (selectedProtocolData && selectedProtocolData.pairs) {
               const pairs = selectedProtocolData.pairs;
-              const pairOptions = Object.entries(pairs).map(([key, value]) => ({
-                label: `${value.token0.name}/${value.token1.name}`,
-                value: key,
-              }));
+              const pairOptions = Object.entries(pairs).map(([key, value]) => {
+                const pair = value as Pair; // Assuming Pair is the correct type
+                return {
+                  label: `${pair.token0.name}/${pair.token1.name}`,
+                  value: key,
+                };
+              });
+
               setLpPairOptions(pairOptions);
             } else {
               setLpPairOptions([]);
@@ -136,7 +166,6 @@ const Home: NextPage = () => {
     return options;
   };
 
-  const chainProtocols = protocols[chainId?.toString()] as ProtocolVersion;
   const fromProtocolOptions = chainProtocols
     ? generateProtocolOptions(chainProtocols)
     : [];
@@ -154,17 +183,149 @@ const Home: NextPage = () => {
     dispatch(setMaxPrice(prices.maxPrice + delta));
   };
 
-  
-
   const handleClick = () => {};
 
+  const [userBalance, setUserBalance] = useState("");
+  const [migrationStatus, setMigrationStatus] = useState("");
+
+  const [lpMigrator, setLpMigrator] = useState<string | null>(null);
+  useEffect(() => {
+    const initContract = async () => {
+      try {
+        // Assuming you are using MetaMask for web3 provider
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+
+        console.log(" provider.getSigner()", provider.getSigner());
+
+        // Replace with your contract's address
+        const contractAddress = "0xF5Bee5b02Ee854A71E0b43A2f69b1e017A7720C8";
+
+        // Replace with your contract's ABI
+        const lpMigratorAbi = LpMigrator;
+
+        const lpMigratorContract = new ethers.Contract(
+          contractAddress,
+          lpMigratorAbi,
+          provider.getSigner()
+        );
+        console.log("lpMigratorContract", lpMigratorContract);
+        //setLpMigrator(lpMigratorContract as string);
+      } catch (error) {
+        console.error("Error initializing contract:", error);
+      }
+    };
+
+    initContract();
+  }, []);
+
+  const getPositions = async () => {
+    try {
+    } catch (error) {}
+  };
 
   const handleMigrate = async () => {
-     const positionManager = await ethers.getContractAt(
-       "PositionManager",
-       positionManagerAddress
-     );
+    try {
+      // Connect to Ethereum network
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+
+      console.log("singer", signer);
+      // Add logic from your provided script here
+      // For example, create contract instances, fetch user balance, etc.
+
+      // Update state variables as needed
+      // setUserBalance(...);
+      // setMigrationStatus("Migration successful");
+    } catch (error) {
+      console.error(error);
+      setMigrationStatus("Migration failed");
+    }
+  };
+
+  function calculatePriceUsingTicks(
+    tick: number,
+    decimal0: number,
+    decimal1: number
+  ) {
+    const p = 1.0001 ** tick;
+    return (p * decimal0) / decimal1;
   }
+
+  const [positionManager, setPositionManager] = useState<Contract | null>(null);
+  useEffect(() => {
+    const initContract = async () => {
+      if (!chainId || !selectedFromProtocol) return;
+      const tokenIds: BigNumber[] = [];
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+
+        if (!selectedFromProtocol?.value) return;
+        const protocolKey = selectedFromProtocol.value;
+        const protocolData = protocols[chainId.toString()].v3[protocolKey];
+        console.log("protocolData", protocolData);
+
+        // Check if routerAddress is available in protocolData
+        const routerAddress = protocolData?.positionManagerAddress;
+        if (!routerAddress) {
+          console.error("Router address not found for the selected protocol");
+          return;
+        }
+
+        const positionManagerContract = new ethers.Contract(
+          routerAddress,
+          INonfungiblePositionManagerABI, // Replace with actual ABI
+          provider.getSigner()
+        );
+        console.log("positionManagerContract", positionManagerContract);
+        if (address) {
+          const noOfTokens = await positionManagerContract.balanceOf(address);
+          console.log("noOfTokens", noOfTokens);
+          for (let i = 0; i < noOfTokens.toNumber(); i++) {
+            tokenIds.push(
+              await positionManagerContract.tokenOfOwnerByIndex(address, i)
+            );
+          }
+          console.log("tokenIds", tokenIds);
+        }
+        setPositionManager(positionManagerContract);
+
+        const userPositions = await Promise.all(
+          tokenIds.map(async (id) => positionManagerContract.positions(id))
+        );
+
+        console.log("userPositions", userPositions);
+
+        const userActivePortions: any = [];
+
+        userPositions.map((data, i) => {
+          // console.log(data)
+          // console.log(data.token0 == pairUni.token0.address)
+          // console.log(data.token1, pairUni.token1.address, data.token1 == pairUni.token1.address)
+          // console.log(data.fee, pairUni.fee.value, data.fee == pairUni.fee.value)
+          // console.log(data.liquidity, data.liquidity.gt(0))
+          // if (
+          //   ethers.utils.getAddress(data.token0) ==
+          //     ethers.utils.getAddress(pairUni.token0.address) &&
+          //   ethers.utils.getAddress(data.token1) ==
+          //     ethers.utils.getAddress(pairUni.token1.address) &&
+          //   data.fee == pairUni.fee.value &&
+          //   data.liquidity.gt(0)
+          // ) {
+
+          // }
+
+          userActivePortions.push({ ...data, tokenId: tokenIds[i] });
+        });
+      } catch (error) {
+        console.error("Error initializing contract:", error);
+      }
+    };
+
+    initContract();
+  }, [chainId, selectedFromProtocol]);
   return (
     <div className="w-full mx-auto max-w-2xl relative mt-32">
       <div className="flex flex-col justify-between items-center h-auto bg-[#fefeff] rounded-lg p-8">
@@ -199,11 +360,11 @@ const Home: NextPage = () => {
           <div>
             <p>Select Pair</p>
             <Dropdown
-              options={lpFromPairOptions} 
-              onSelect={() => {}} 
+              options={lpFromPairOptions}
+              onSelect={() => {}}
               placeholder="Select LP Pair"
-              value={selectedLpPair} 
-              disabled={true} 
+              value={selectedLpPair}
+              disabled={true}
             />
           </div>
         </div>
@@ -212,6 +373,7 @@ const Home: NextPage = () => {
           <p className="p-2"> 122r per eth</p>
         </div>
         <p>{chainId}</p>
+        <p>{address}</p>
         <div className="flex justify-evenly gap-x-4 w-full">
           <PriceComponent
             label="Min Price"
@@ -229,6 +391,7 @@ const Home: NextPage = () => {
           />
         </div>
         <button
+          onClick={() => handleMigrate()}
           className="
         bg-[#27b992]
         px-4 py-2 
