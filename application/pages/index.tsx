@@ -8,7 +8,7 @@ import {
   selectLpToPairAddress,
   selectLpFromPairAddress,
 } from "../redux/slices/dropdownSlice";
-
+import { BigNumber as BN } from "bignumber.js";
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,6 +19,9 @@ import { useAddress, useChainId } from "@thirdweb-dev/react";
 import { ethers, Contract, BigNumber } from "ethers";
 import LpMigrator from "../abi/LpMigrator.json";
 import INonfungiblePositionManagerABI from "../abi/PositionManager.json";
+import { nearestUsableTick } from "@uniswap/v3-sdk";
+import IUniswapV3Pool from "../abi/UniswapV3Pool.json"
+
 const Home: NextPage = () => {
   const dispatch = useDispatch();
   const chainId = useChainId();
@@ -225,82 +228,160 @@ const Home: NextPage = () => {
     decimal0: number,
     decimal1: number
   ) {
-    const p = 1.0001 ** tick;
-    return (p * decimal0) / decimal1;
+    // Calculate the price based on the tick
+    const p = new BN(1.0001).pow(tick);
+
+    // Create BigNumber instances for the unit conversion, respecting the decimals
+    const unit0 = new BN(10).pow(decimal0);
+    const unit1 = new BN(10).pow(decimal1);
+
+    // Calculate the price and return the result as a string
+    return p.multipliedBy(unit0).dividedBy(unit1).toString();
   }
 
   const [positionManager, setPositionManager] = useState<Contract | null>(null);
+
+   const [positionManagerFrom, setPositionManagerFrom] =
+     useState<Contract | null>(null);
+   const [positionManagerTo, setPositionManagerTo] =
+     useState<Contract | null>(null);
+  
+  
+  const [fromPoolV3Contract, setFromPoolV3Contract] =
+    useState<Contract | null>(null);
+  const [toPoolV3Contract, setToPoolV3Contract] =
+    useState<Contract | null>(null);
+
+  // useEffect(() => {
+  //   const initContract = async () => {
+  //     if (!chainId || !selectedFromProtocol) return;
+  //     const tokenIds: BigNumber[] = [];
+  //     try {
+  //       const provider = new ethers.providers.Web3Provider(window.ethereum);
+  //       await provider.send("eth_requestAccounts", []);
+
+  //       const protocolKey = selectedFromProtocol.value;
+  //       const protocolData = protocols[chainId.toString()].v3[protocolKey];
+  //       console.log("protocolData", protocolData);
+
+  //       // Check if routerAddress is available in protocolData
+  //       const routerAddress = protocolData?.positionManagerAddress;
+  //       if (!routerAddress) {
+  //         console.error("Router address not found for the selected protocol");
+  //         return;
+  //       }
+
+  //       const positionManagerContract = new ethers.Contract(
+  //         routerAddress,
+  //         INonfungiblePositionManagerABI, // Replace with actual ABI
+  //         provider.getSigner()
+  //       );
+  //       console.log("positionManagerContract", positionManagerContract);
+  //       if (address) {
+  //         const noOfTokens = await positionManagerContract.balanceOf(address);
+  //         console.log("noOfTokens", noOfTokens);
+  //         for (let i = 0; i < noOfTokens.toNumber(); i++) {
+  //           tokenIds.push(
+  //             await positionManagerContract.tokenOfOwnerByIndex(address, i)
+  //           );
+  //         }
+  //         console.log("tokenIds", tokenIds);
+  //       }
+  //       setPositionManager(positionManagerContract);
+
+  //       const userPositions = await Promise.all(
+  //         tokenIds.map(async (id) => positionManagerContract.positions(id))
+  //       );
+
+  //       console.log("userPositions", userPositions);
+
+  //       const userActivePortions: any = [];
+
+  //       userPositions.map((data, i) => {
+  //         // console.log(data)
+  //         // console.log(data.token0 == pairUni.token0.address)
+  //         // console.log(data.token1, pairUni.token1.address, data.token1 == pairUni.token1.address)
+  //         // console.log(data.fee, pairUni.fee.value, data.fee == pairUni.fee.value)
+  //         // console.log(data.liquidity, data.liquidity.gt(0))
+  //         // if (
+  //         //   ethers.utils.getAddress(data.token0) ==
+  //         //     ethers.utils.getAddress(pairUni.token0.address) &&
+  //         //   ethers.utils.getAddress(data.token1) ==
+  //         //     ethers.utils.getAddress(pairUni.token1.address) &&
+  //         //   data.fee == pairUni.fee.value &&
+  //         //   data.liquidity.gt(0)
+  //         // ) {
+
+  //         // }
+
+  //         userActivePortions.push({ ...data, tokenId: tokenIds[i] });
+  //       });
+  //     } catch (error) {
+  //       console.error("Error initializing contract:", error);
+  //     }
+  //   };
+
+  //   initContract();
+  // }, [chainId, selectedFromProtocol]);
+
+
   useEffect(() => {
-    const initContract = async () => {
-      if (!chainId || !selectedFromProtocol) return;
-      const tokenIds: BigNumber[] = [];
+    const initContracts = async () => {
+      if (!chainId || !selectedFromProtocol || !selectedToProtocol) return;
+
       try {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
 
-        const protocolKey = selectedFromProtocol.value;
-        const protocolData = protocols[chainId.toString()].v3[protocolKey];
-        console.log("protocolData", protocolData);
+        // Assuming you have the addresses and ABIs for these contracts
+        const positionManagerFromAddress = "..."; // Replace with actual address
+        const positionManagerToAddress = "..."; // Replace with actual address
+        const fromPoolV3Address = "..."; // Replace with actual address
+        const toPoolV3Address = "..."; // Replace with actual address
 
-        // Check if routerAddress is available in protocolData
-        const routerAddress = protocolData?.positionManagerAddress;
-        if (!routerAddress) {
-          console.error("Router address not found for the selected protocol");
-          return;
-        }
-
-        const positionManagerContract = new ethers.Contract(
-          routerAddress,
+        const positionManagerFromContract = new ethers.Contract(
+          positionManagerFromAddress,
           INonfungiblePositionManagerABI, // Replace with actual ABI
           provider.getSigner()
         );
-        console.log("positionManagerContract", positionManagerContract);
-        if (address) {
-          const noOfTokens = await positionManagerContract.balanceOf(address);
-          console.log("noOfTokens", noOfTokens);
-          for (let i = 0; i < noOfTokens.toNumber(); i++) {
-            tokenIds.push(
-              await positionManagerContract.tokenOfOwnerByIndex(address, i)
-            );
-          }
-          console.log("tokenIds", tokenIds);
-        }
-        setPositionManager(positionManagerContract);
 
-        const userPositions = await Promise.all(
-          tokenIds.map(async (id) => positionManagerContract.positions(id))
+        const positionManagerToContract = new ethers.Contract(
+          positionManagerToAddress,
+          INonfungiblePositionManagerABI, // Replace with actual ABI
+          provider.getSigner()
         );
 
-        console.log("userPositions", userPositions);
+        const fromPoolV3Contract = new ethers.Contract(
+          fromPoolV3Address,
+          IUniswapV3Pool, // Replace with actual ABI
+          provider.getSigner()
+        );
 
-        const userActivePortions: any = [];
+        const toPoolV3Contract = new ethers.Contract(
+          toPoolV3Address,
+          IUniswapV3Pool, // Replace with actual ABI
+          provider.getSigner()
+        );
 
-        userPositions.map((data, i) => {
-          // console.log(data)
-          // console.log(data.token0 == pairUni.token0.address)
-          // console.log(data.token1, pairUni.token1.address, data.token1 == pairUni.token1.address)
-          // console.log(data.fee, pairUni.fee.value, data.fee == pairUni.fee.value)
-          // console.log(data.liquidity, data.liquidity.gt(0))
-          // if (
-          //   ethers.utils.getAddress(data.token0) ==
-          //     ethers.utils.getAddress(pairUni.token0.address) &&
-          //   ethers.utils.getAddress(data.token1) ==
-          //     ethers.utils.getAddress(pairUni.token1.address) &&
-          //   data.fee == pairUni.fee.value &&
-          //   data.liquidity.gt(0)
-          // ) {
+        setPositionManagerFrom(positionManagerFromContract);
+        setPositionManagerTo(positionManagerToContract);
+        setFromPoolV3Contract(fromPoolV3Contract);
+        setToPoolV3Contract(toPoolV3Contract);
 
-          // }
-
-          userActivePortions.push({ ...data, tokenId: tokenIds[i] });
-        });
+        // Additional logic if necessary
       } catch (error) {
-        console.error("Error initializing contract:", error);
+        console.error("Error initializing contracts:", error);
       }
     };
 
-    initContract();
-  }, [chainId, selectedFromProtocol]);
+    initContracts();
+  }, [chainId, selectedFromProtocol, selectedToProtocol]);
+
+
+
+
+
+  
   return (
     <div className="w-full mx-auto max-w-2xl relative mt-32">
       <div className="flex flex-col justify-between items-center h-auto bg-[#fefeff] rounded-lg p-8">
