@@ -12,7 +12,7 @@ import {
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { Pair, ProtocolVersion, protocols } from "../const/protocols";
+import { ProtocolVersion, protocols } from "../const/protocols";
 import PriceComponent from "@/components/ui/price-component";
 import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
 import { useAddress, useChainId } from "@thirdweb-dev/react";
@@ -24,11 +24,6 @@ const Home: NextPage = () => {
   const chainId = useChainId();
   const address = useAddress();
 
-  // let chainIdString = chainId?.toString();
-
-  // Access the specific protocol version (e.g., 'v3') you need.
-  // const chainProtocolsV3 = chainIdString ? protocols[chainIdString]?.v3 : null;
-
   const selectedFromProtocol = useSelector(
     (state: RootState) => state.dropdown.selectedFromProtocol
   );
@@ -39,22 +34,6 @@ const Home: NextPage = () => {
   const [lpToPairOptions, setLpToPairOptions] = useState<Option[]>([]);
   const [selectedLpPair, setSelectedLpPair] = useState<string>("");
 
-  const chainIdString = chainId?.toString();
-  let chainProtocols: ProtocolVersion | undefined;
-
-  if (chainIdString && protocols[chainIdString]) {
-    chainProtocols = protocols[chainIdString].v3;
-  }
-
-  useEffect(() => {
-    if (selectedFromProtocol?.value && chainProtocols) {
-      loadLpPairOptions(selectedFromProtocol.value, setLpFromPairOptions);
-    }
-    if (selectedToProtocol?.value && chainProtocols) {
-      loadLpPairOptions(selectedToProtocol.value, setLpToPairOptions);
-    }
-  }, [selectedFromProtocol, selectedToProtocol, chainProtocols]);
-
   const loadLpPairOptions = (
     selectedProtocolKey: string,
     setLpPairOptions: React.Dispatch<React.SetStateAction<Option[]>>
@@ -63,21 +42,17 @@ const Home: NextPage = () => {
       const chainProtocols = protocols[chainId.toString()];
       if (chainProtocols) {
         ["v2", "v3"].forEach((version) => {
-          const versionProtocols =
-            chainProtocols[version as keyof typeof chainProtocols];
-
+          //@ts-ignore
+          const versionProtocols = chainProtocols[version];
           if (versionProtocols) {
             const selectedProtocolData = versionProtocols[selectedProtocolKey];
             if (selectedProtocolData && selectedProtocolData.pairs) {
               const pairs = selectedProtocolData.pairs;
-              const pairOptions = Object.entries(pairs).map(([key, value]) => {
-                const pair = value as Pair; // Assuming Pair is the correct type
-                return {
-                  label: `${pair.token0.name}/${pair.token1.name}`,
-                  value: key,
-                };
-              });
-
+              const pairOptions = Object.entries(pairs).map(([key, value]) => ({
+                //@ts-ignore
+                label: `${value.token0.name}/${value.token1.name}`,
+                value: key,
+              }));
               setLpPairOptions(pairOptions);
             } else {
               setLpPairOptions([]);
@@ -165,7 +140,8 @@ const Home: NextPage = () => {
     }
     return options;
   };
-
+  //@ts-ignore
+  const chainProtocols = protocols[chainId?.toString()] as ProtocolVersion;
   const fromProtocolOptions = chainProtocols
     ? generateProtocolOptions(chainProtocols)
     : [];
@@ -262,7 +238,6 @@ const Home: NextPage = () => {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
 
-        if (!selectedFromProtocol?.value) return;
         const protocolKey = selectedFromProtocol.value;
         const protocolData = protocols[chainId.toString()].v3[protocolKey];
         console.log("protocolData", protocolData);
