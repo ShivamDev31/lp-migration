@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 
 export const { ThirdwebAuthHandler, getUser } = ThirdwebAuth({
   // Use the domain from the environment or default to evmkit.com
-  domain: "LP Migrator",
+  domain: "https://lpmigrate.vercel.app/",
 
   // Use the private key from the environment or generate a random one
   wallet: process.env.THIRDWEB_AUTH_PRIVATE_KEY
