@@ -12,7 +12,7 @@ import { BigNumber as BN } from "bignumber.js";
 import ArrowButton from "@/components/ui/arrow-button";
 import { RootState } from "../redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { ProtocolVersion, protocols } from "../const/protocols";
+import { ProtocolVersion, contractAddresses, protocols } from "../const/protocols";
 import PriceComponent from "@/components/ui/price-component";
 import { setMinPrice, setMaxPrice } from "../redux/slices/priceSlice";
 import { useAddress, useChainId } from "@thirdweb-dev/react";
@@ -27,12 +27,8 @@ const Home: NextPage = () => {
   const chainId = useChainId();
   const address = useAddress();
 
-  const selectedFromProtocol = useSelector(
-    (state: RootState) => state.dropdown.selectedFromProtocol
-  );
-  const selectedToProtocol = useSelector(
-    (state: RootState) => state.dropdown.selectedToProtocol
-  );
+  const selectedFromProtocol = useSelector((state: RootState) => state.dropdown.selectedFromProtocol);
+  const selectedToProtocol = useSelector((state: RootState) => state.dropdown.selectedToProtocol);
   const [lpFromPairOptions, setLpFromPairOptions] = useState<Option[]>([]);
   const [lpToPairOptions, setLpToPairOptions] = useState<Option[]>([]);
   const [selectedLpPair, setSelectedLpPair] = useState<string>("");
@@ -48,8 +44,7 @@ const Home: NextPage = () => {
           //@ts-ignore
           const versionProtocols = chainProtocols[version];
           if (versionProtocols) {
-            const selectedprotocolFromData =
-              versionProtocols[selectedProtocolKey];
+            const selectedprotocolFromData = versionProtocols[selectedProtocolKey];
             if (selectedprotocolFromData && selectedprotocolFromData.pairs) {
               const pairs = selectedprotocolFromData.pairs;
               const pairOptions = Object.entries(pairs).map(([key, value]) => ({
@@ -68,15 +63,14 @@ const Home: NextPage = () => {
   };
 
   const getPoolInfo = async (poolV3Contract: Contract) => {
-    const [token0, token1, fee, liquidity, slot0, tickSpacing] =
-      await Promise.all([
-        poolV3Contract.token0(),
-        poolV3Contract.token1(),
-        poolV3Contract.fee(),
-        poolV3Contract.liquidity(),
-        poolV3Contract.slot0(),
-        poolV3Contract.tickSpacing(),
-      ]);
+    const [token0, token1, fee, liquidity, slot0, tickSpacing] = await Promise.all([
+      poolV3Contract.token0(),
+      poolV3Contract.token1(),
+      poolV3Contract.fee(),
+      poolV3Contract.liquidity(),
+      poolV3Contract.slot0(),
+      poolV3Contract.tickSpacing(),
+    ]);
     return {
       token0,
       token1,
@@ -130,36 +124,24 @@ const Home: NextPage = () => {
   //   return options;
   // };
 
-  const generateProtocolOptions = (
-    chainProtocols: any,
-    isToDropdown: boolean = false
-  ) => {
+  const generateProtocolOptions = (chainProtocols: any, isToDropdown: boolean = false) => {
     const options: Option[] = [];
     if (chainProtocols && typeof chainProtocols === "object") {
       Object.entries(chainProtocols).forEach(([versionKey, versionValue]) => {
         if (isToDropdown && versionKey !== "v3") return;
 
         if (typeof versionValue === "object" && versionValue !== null) {
-          Object.entries(versionValue).forEach(
-            ([protocolKey, protocolFromData]) => {
-              if (
-                protocolFromData &&
-                typeof protocolFromData === "object" &&
-                "name" in protocolFromData
-              ) {
-                // Exclude the selected "From" protocol for the "To" dropdown
-                if (
-                  !isToDropdown ||
-                  (isToDropdown && protocolKey !== selectedFromProtocol?.value)
-                ) {
-                  options.push({
-                    label: protocolFromData.name,
-                    value: protocolKey,
-                  });
-                }
+          Object.entries(versionValue).forEach(([protocolKey, protocolFromData]) => {
+            if (protocolFromData && typeof protocolFromData === "object" && "name" in protocolFromData) {
+              // Exclude the selected "From" protocol for the "To" dropdown
+              if (!isToDropdown || (isToDropdown && protocolKey !== selectedFromProtocol?.value)) {
+                options.push({
+                  label: protocolFromData.name,
+                  value: protocolKey,
+                });
               }
             }
-          );
+          });
         }
       });
     }
@@ -167,12 +149,8 @@ const Home: NextPage = () => {
   };
   //@ts-ignore
   const chainProtocols = protocols[chainId?.toString()] as ProtocolVersion;
-  const fromProtocolOptions = chainProtocols
-    ? generateProtocolOptions(chainProtocols)
-    : [];
-  const toProtocolOptions = chainProtocols
-    ? generateProtocolOptions(chainProtocols, true)
-    : [];
+  const fromProtocolOptions = chainProtocols ? generateProtocolOptions(chainProtocols) : [];
+  const toProtocolOptions = chainProtocols ? generateProtocolOptions(chainProtocols, true) : [];
 
   const prices = useSelector((state: RootState) => state.prices);
 
@@ -190,6 +168,7 @@ const Home: NextPage = () => {
   const [migrationStatus, setMigrationStatus] = useState("");
 
   const [lpMigrator, setLpMigrator] = useState<Contract | null>(null);
+
   useEffect(() => {
     const initContract = async () => {
       try {
@@ -200,16 +179,16 @@ const Home: NextPage = () => {
         console.log(" provider.getSigner()", provider.getSigner());
 
         // Replace with your contract's address
-        const contractAddress = "0xF5Bee5b02Ee854A71E0b43A2f69b1e017A7720C8";
+
+        console.log(chainId, contractAddresses);
+        // @ts-ignore
+        const contractAddress = contractAddresses[chainId];
+        console.log("contractAddress", chainId, contractAddress);
 
         // Replace with your contract's ABI
         const lpMigratorAbi = LpMigrator;
 
-        const lpMigratorContract = new ethers.Contract(
-          contractAddress,
-          lpMigratorAbi,
-          provider.getSigner()
-        );
+        const lpMigratorContract = new ethers.Contract(contractAddress, lpMigratorAbi, provider.getSigner());
         console.log("lpMigratorContract", lpMigratorContract);
         setLpMigrator(lpMigratorContract);
       } catch (error) {
@@ -218,7 +197,7 @@ const Home: NextPage = () => {
     };
 
     initContract();
-  }, []);
+  }, [chainId]);
 
   const getPositions = async () => {
     try {
@@ -245,11 +224,7 @@ const Home: NextPage = () => {
     }
   };
 
-  function calculatePriceUsingTicks(
-    tick: number,
-    decimal0: number,
-    decimal1: number
-  ) {
+  function calculatePriceUsingTicks(tick: number, decimal0: number, decimal1: number) {
     // Calculate the price based on the tick
     const p = new BN(1.0001).pow(tick);
 
@@ -263,203 +238,136 @@ const Home: NextPage = () => {
 
   const [positionManager, setPositionManager] = useState<Contract | null>(null);
 
-  const [positionManagerFrom, setPositionManagerFrom] =
-    useState<Contract | null>(null);
-  const [positionManagerTo, setPositionManagerTo] = useState<Contract | null>(
-    null
-  );
+  const [positionManagerFrom, setPositionManagerFrom] = useState<Contract | null>(null);
+  const [positionManagerTo, setPositionManagerTo] = useState<Contract | null>(null);
 
-  const [fromPoolV3Contract, setFromPoolV3Contract] = useState<Contract | null>(
-    null
-  );
-  const [toPoolV3Contract, setToPoolV3Contract] = useState<Contract | null>(
-    null
-  );
+  const [fromPoolV3Contract, setFromPoolV3Contract] = useState<Contract | null>(null);
+  const [toPoolV3Contract, setToPoolV3Contract] = useState<Contract | null>(null);
 
-  useEffect(() => {
-    const initContract = async () => {
-      if (!chainId || !selectedFromProtocol) return;
-      const tokenIds: BigNumber[] = [];
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
+  // useEffect(() => {}, [chainId, selectedFromProtocol]);
 
-        const protocolFromKey = selectedFromProtocol.value;
-        const protocolToKey = selectedFromProtocol.value;
-        const protocolFromData =
-          protocols[chainId.toString()].v3[protocolFromKey];
-        console.log("protocolFromData", protocolFromData);
-        const protocolToData = protocols[chainId.toString()].v3[protocolToKey];
-        console.log("protocolToData", protocolToData);
+  const handleMigrateFun = async () => {
+    if (!chainId || !selectedFromProtocol || !selectedToProtocol) return;
+    const tokenIds: BigNumber[] = [];
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
 
-        // Check if routerAddress is available in protocolFromData
-        const positionMangerFromAddress =
-          protocolFromData?.positionManagerAddress;
+      const protocolFromKey = selectedFromProtocol.value;
+      const protocolToKey = selectedToProtocol?.value;
+      const protocolFromData = protocols[chainId.toString()].v3[protocolFromKey];
+      console.log("protocolFromData", protocolFromData);
+      const protocolToData = protocols[chainId.toString()].v3[protocolToKey];
+      console.log("protocolToData", protocolToData);
 
-        const positionMangerToAddress =
-          protocolToData?.positionManagerAddress || "";
+      // Check if routerAddress is available in protocolFromData
+      const positionMangerFromAddress = protocolFromData?.positionManagerAddress;
 
-        if (!positionMangerFromAddress) {
-          console.error("Router address not found for the selected protocol");
-          return;
-        }
+      const positionMangerToAddress = protocolToData?.positionManagerAddress || "";
 
-        const positionMangerFromContract = new ethers.Contract(
-          positionMangerFromAddress,
-          INonfungiblePositionManagerABI, // Replace with actual ABI
-          provider.getSigner()
-        );
-
-        const positionMangerToContract = new ethers.Contract(
-          positionMangerToAddress,
-          INonfungiblePositionManagerABI, // Replace with actual ABI
-          provider.getSigner()
-        );
-        console.log("positionMangerFromContract", positionMangerFromContract);
-        if (address) {
-          const noOfTokens = await positionMangerFromContract.balanceOf(
-            address
-          );
-          console.log("noOfTokens", noOfTokens);
-          for (let i = 0; i < noOfTokens.toNumber(); i++) {
-            tokenIds.push(
-              await positionMangerFromContract.tokenOfOwnerByIndex(address, i)
-            );
-          }
-          console.log("tokenIds", tokenIds);
-        }
-        setPositionManager(positionMangerFromContract);
-
-        const userPositions = await Promise.all(
-          tokenIds.map(async (id) => positionMangerFromContract.positions(id))
-        );
-
-        console.log("userPositions", userPositions);
-
-        const userActivePortions: any = [];
-
-        userPositions.map((data, i) => {
-          // console.log(data)
-          // console.log(data.token0 == pairUni.token0.address)
-          // console.log(data.token1, pairUni.token1.address, data.token1 == pairUni.token1.address)
-          // console.log(data.fee, pairUni.fee.value, data.fee == pairUni.fee.value)
-          // console.log(data.liquidity, data.liquidity.gt(0))
-          // if (
-          //   ethers.utils.getAddress(data.token0) ==
-          //     ethers.utils.getAddress(pairUni.token0.address) &&
-          //   ethers.utils.getAddress(data.token1) ==
-          //     ethers.utils.getAddress(pairUni.token1.address) &&
-          //   data.fee == pairUni.fee.value &&
-          //   data.liquidity.gt(0)
-          // ) {
-
-          // }
-
-          userActivePortions.push({ ...data, tokenId: tokenIds[i] });
-        });
-
-        // const fromprotocolFromData =
-        //   protocols[chainId.toString()]?.v3[selectedFromProtocol.value];
-        // const toprotocolFromData =
-        //   protocols[chainId.toString()]?.v3[selectedToProtocol.value];
-
-        // const positionManagerFromAddress =
-        //   fromprotocolFromData?.positionManagerAddress;
-        // const positionManagerToAddress =
-        //   toprotocolFromData?.positionManagerAddress;
-
-        // Assuming the selected LP pair is relevant to the 'from' protocol
-        const fromPoolV3Address =
-          protocolFromData?.pairs[selectedLpPair]?.address;
-        // For the 'to' protocol, it might be different depending on your application logic
-        const toPoolV3Address = protocolToData?.pairs[selectedLpPair]?.address;
-
-        if (
-          positionMangerFromAddress &&
-          positionMangerToAddress &&
-          fromPoolV3Address &&
-          toPoolV3Address
-        ) {
-          // const positionManagerFromContract = new ethers.Contract(
-          //   positionMangerFromAddress,
-          //   INonfungiblePositionManagerABI,
-          //   provider.getSigner()
-          // );
-
-          // const positionManagerToContract = new ethers.Contract(
-          //   positionManagerToAddress,
-          //   INonfungiblePositionManagerABI,
-          //   provider.getSigner()
-          // );
-
-          const fromPoolV3Contract = new ethers.Contract(
-            fromPoolV3Address,
-            IUniswapV3Pool,
-            provider.getSigner()
-          );
-
-          const toPoolV3Contract = new ethers.Contract(
-            toPoolV3Address,
-            IUniswapV3Pool,
-            provider.getSigner()
-          );
-
-          setPositionManagerFrom(positionMangerFromContract);
-          setPositionManagerTo(positionMangerToContract);
-          setFromPoolV3Contract(fromPoolV3Contract);
-          setToPoolV3Contract(toPoolV3Contract);
-
-          let fromPoolInfo = await getPoolInfo(fromPoolV3Contract);
-          let toPoolInfo = await getPoolInfo(toPoolV3Contract);
-          let tickLower =
-            nearestUsableTick(fromPoolInfo.tick, fromPoolInfo.tickSpacing) -
-            fromPoolInfo.tickSpacing * prices.minPrice;
-          let tickUpper =
-            nearestUsableTick(fromPoolInfo.tick, fromPoolInfo.tickSpacing) +
-            fromPoolInfo.tickSpacing * prices.maxPrice;
-
-          const tokenId = userActivePortions[0].tokenId;
-          const decreaseLiquidityParamsV3 = {
-            positionManager: positionMangerFromAddress,
-            tokenId: tokenId,
-            liquidity: userActivePortions[0].liquidity,
-            amount0ToAdd: 0,
-            amount1ToAdd: 0,
-            amount0Min: 0,
-            amount1Min: 0,
-            refundAsETH: false,
-          };
-          const addLiquidityParamsV3 = {
-            positionManager: positionMangerToAddress,
-            fee: toPoolInfo.fee,
-            tickLower: tickLower,
-            tickUpper: tickUpper,
-            amount0Min: 0,
-            amount1Min: 0,
-          };
-
-          if (lpMigrator) {
-            let tx = await positionMangerFromContract.approve(
-              lpMigrator.address,
-              tokenId
-            );
-            let approvalReceipt = await tx.wait();
-            tx = await lpMigrator.migrateLpFromV3ToV3(
-              address,
-              decreaseLiquidityParamsV3,
-              addLiquidityParamsV3
-            );
-            let txReceipt = await tx.wait();
-          }
-        }
-      } catch (error) {
-        console.error("Error initializing contract:", error);
+      if (!positionMangerFromAddress) {
+        console.error("Router address not found for the selected protocol");
+        return;
       }
-    };
 
-    initContract();
-  }, [chainId, selectedFromProtocol]);
+      const positionMangerFromContract = new ethers.Contract(
+        positionMangerFromAddress,
+        INonfungiblePositionManagerABI, // Replace with actual ABI
+        provider.getSigner()
+      );
 
+      const positionMangerToContract = new ethers.Contract(
+        positionMangerToAddress,
+        INonfungiblePositionManagerABI, // Replace with actual ABI
+        provider.getSigner()
+      );
+      console.log("positionMangerFromContract", positionMangerFromContract);
+      if (address) {
+        const noOfTokens = await positionMangerFromContract.balanceOf(address);
+        console.log("noOfTokens", noOfTokens);
+        for (let i = 0; i < noOfTokens.toNumber(); i++) {
+          tokenIds.push(await positionMangerFromContract.tokenOfOwnerByIndex(address, i));
+        }
+        console.log("tokenIds", tokenIds);
+      }
+      setPositionManager(positionMangerFromContract);
+
+      const userPositions = await Promise.all(tokenIds.map(async (id) => positionMangerFromContract.positions(id)));
+
+      console.log("userPositions", userPositions);
+
+      const userActivePortions: any = [];
+
+      console.log(selectedLpPair, protocolFromData);
+      const fromPairData = protocolFromData?.pairs[selectedLpPair];
+
+      console.log(fromPairData);
+
+      userPositions.map((data, i) => {
+        console.log(ethers.utils.getAddress(data.token0), ethers.utils.getAddress(fromPairData.token0.address));
+        console.log(ethers.utils.getAddress(data.token1), ethers.utils.getAddress(fromPairData.token1.address));
+        //@ts-ignore
+        console.log(data.fee, fromPairData?.fee.value);
+        if (
+          ethers.utils.getAddress(data.token0) == ethers.utils.getAddress(fromPairData.token0.address) &&
+          ethers.utils.getAddress(data.token1) == ethers.utils.getAddress(fromPairData.token1.address) &&
+          //@ts-ignore
+          data.fee == fromPairData?.fee.value &&
+          data.liquidity.gt(0)
+        ) {
+          userActivePortions.push({ ...data, tokenId: tokenIds[i] });
+        }
+      });
+
+      console.log({ userActivePortions });
+
+      const fromPoolV3Address = protocolFromData?.pairs[selectedLpPair]?.address;
+      const toPoolV3Address = protocolToData?.pairs[selectedLpPair]?.address;
+
+      const fromPoolV3Contract = new ethers.Contract(fromPoolV3Address, IUniswapV3Pool, provider.getSigner());
+      const toPoolV3Contract = new ethers.Contract(toPoolV3Address, IUniswapV3Pool, provider.getSigner());
+      setPositionManagerFrom(positionMangerFromContract);
+      setPositionManagerTo(positionMangerToContract);
+      setFromPoolV3Contract(fromPoolV3Contract);
+      setToPoolV3Contract(toPoolV3Contract);
+
+      let fromPoolInfo = await getPoolInfo(fromPoolV3Contract);
+      let toPoolInfo = await getPoolInfo(toPoolV3Contract);
+      let tickLower =
+        nearestUsableTick(fromPoolInfo.tick, fromPoolInfo.tickSpacing) - fromPoolInfo.tickSpacing * prices.minPrice;
+      let tickUpper =
+        nearestUsableTick(fromPoolInfo.tick, fromPoolInfo.tickSpacing) + fromPoolInfo.tickSpacing * prices.maxPrice;
+
+      const tokenId = userActivePortions[0].tokenId;
+      const decreaseLiquidityParamsV3 = {
+        positionManager: positionMangerFromAddress,
+        tokenId: tokenId,
+        liquidity: userActivePortions[0].liquidity,
+        amount0ToAdd: 0,
+        amount1ToAdd: 0,
+        amount0Min: 0,
+        amount1Min: 0,
+        refundAsETH: false,
+      };
+      const addLiquidityParamsV3 = {
+        positionManager: positionMangerToAddress,
+        fee: toPoolInfo.fee,
+        tickLower: tickLower,
+        tickUpper: tickUpper,
+        amount0Min: 0,
+        amount1Min: 0,
+      };
+
+      if (lpMigrator) {
+        let tx = await positionMangerFromContract.approve(lpMigrator.address, tokenId);
+        let approvalReceipt = await tx.wait();
+        tx = await lpMigrator.migrateLpFromV3ToV3(address, decreaseLiquidityParamsV3, addLiquidityParamsV3);
+        let txReceipt = await tx.wait();
+      }
+    } catch (error) {
+      console.error("Error initializing contract:", error);
+    }
+  };
   // useEffect(() => {
   //   const initContracts = async () => {
   //     if (!chainId || !selectedFromProtocol || !selectedToProtocol) return;
@@ -620,7 +528,7 @@ const Home: NextPage = () => {
           />
         </div>
         <button
-          onClick={() => handleMigrate()}
+          onClick={() => handleMigrateFun()}
           className="
         bg-[#27b992]
         px-4 py-2 

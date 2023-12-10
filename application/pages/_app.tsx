@@ -7,7 +7,7 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { Provider } from "react-redux";
 import store from "../redux/store";
-import { Polygon, Binance } from "@thirdweb-dev/chains";
+import { Polygon, PolygonZkevm, Scroll, Arbitrum, Base } from "@thirdweb-dev/chains";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,9 +24,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         <main className="">
           <ThirdwebProvider
             activeChain={Polygon}
-            supportedChains={[Polygon, Binance]}
+            supportedChains={[Polygon, PolygonZkevm, Scroll, Arbitrum, Base]}
             authConfig={{
-              domain: "LP Provider",
+              domain: "lpmigrate.vercel.app",
               authUrl: "/api/auth",
             }}
             clientId={process.env.NEXT_PUBLIC_THIRDWEB_API_KEY}

@@ -33,182 +33,15 @@ export interface Protocols {
   };
 }
 
-export const protocols: Protocols = {
-  "56": {
-    v2: {
-      "pancake-v2": {
-        name: "PancakeSwapV2",
-        routerAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-        pairs: {
-          "usdt-wbnb": {
-            name: "usdt/wbnb",
-            address: "0x16b9a82891338f9ba80e2d6970fdda79d1eb0dae",
-            token0: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059ff775485246999027b3197955",
-            },
-            token1: {
-              name: "wbnb",
-              decimal: 18,
-              address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-            },
-          },
-          "weth-usdt": {
-            name: "weth/usdt",
-            address: "0x531febfeb9a61d948c384acfbe6dcc51057aea7e",
-            token0: {
-              name: "weth",
-              decimal: 18,
-              address: "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
-            },
-            token1: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059ff775485246999027b3197955",
-            },
-          },
-          "usdt-usdc": {
-            name: "usdt/usdc",
-            address: "0x4f31fa980a675570939b737ebdde0471a4be40eb",
-            token0: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059fF775485246999027B3197955",
-            },
-            token1: {
-              name: "usdc",
-              decimal: 18,
-              address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-            },
-          },
-        },
-      },
-    },
-    v3: {
-      "pancake-v3": {
-        name: "PancakeSwapV3",
-        positionManagerAddress: "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
-        pairs: {
-          "usdt-wbnb": {
-            fee: {
-              percent: "0.05",
-              value: 500,
-            },
-            name: "usdt/wbnb",
-            address: "0x36696169c63e42cd08ce11f5deebbcebae652050",
-            token0: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059ff775485246999027b3197955",
-            },
-            token1: {
-              name: "wbnb",
-              decimal: 18,
-              address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c ",
-            },
-          },
-          "weth-usdt": {
-            fee: {
-              percent: "0.05",
-              value: 500,
-            },
-            name: "weth/usdt",
-            address: "0xbe141893e4c6ad9272e8c04bab7e6a10604501a5",
-            token0: {
-              name: "weth",
-              decimal: 18,
-              address: "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
-            },
-            token1: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059ff775485246999027b3197955",
-            },
-          },
-          "usdt-usdc": {
-            name: "usdt/usdc",
-            fee: {
-              percent: "0.01",
-              value: 100,
-            },
+export const contractAddresses = {
+  "137": "0xF5Bee5b02Ee854A71E0b43A2f69b1e017A7720C8",
+  "1101": "0xB0F2828f3751227115aAe873560EB613983a009d",
+  "42161": "0x7782BA350D2CD7Be7140cE197cf17fCd325D62Fd",
+  "534352": "0x479cDAAF40f5E42728C97e454623d67235ce4007",
+  "8453": "0xB0F2828f3751227115aAe873560EB613983a009d",
+};
 
-            address: "0x92b7807bf19b7dddf89b706143896d05228f3121",
-            token0: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059fF775485246999027B3197955",
-            },
-            token1: {
-              name: "usdc",
-              decimal: 18,
-              address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-            },
-          },
-        },
-      },
-      "uniswap-v3": {
-        name: "UniSwapV3",
-        positionManagerAddress: "0x7b8A01B39D58278b5DE7e48c8449c9f4F5170613",
-        pairs: {
-          "usdt-wbnb": {
-            fee: {
-              percent: "0.05",
-              value: 500,
-            },
-            name: "usdt/wbnb",
-            address: "0x6fe9e9de56356f7edbfcbb29fab7cd69471a4869",
-            token0: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059ff775485246999027b3197955",
-            },
-            token1: {
-              name: "wbnb",
-              decimal: 18,
-              address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c ",
-            },
-          },
-          "weth-usdt": {
-            fee: {
-              percent: "0.05",
-              value: 500,
-            },
-            name: "weth/usdt",
-            address: "0xf9878a5dd55edc120fde01893ea713a4f032229c",
-            token0: {
-              name: "weth",
-              decimal: 18,
-              address: "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
-            },
-            token1: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059ff775485246999027b3197955",
-            },
-          },
-          "usdt-usdc": {
-            name: "usdt/usdc",
-            fee: {
-              percent: "0.01",
-              value: 100,
-            },
-            address: "0x2c3c320d49019d4f9a92352e947c7e5acfe47d68",
-            token0: {
-              name: "usdt",
-              decimal: 18,
-              address: "0x55d398326f99059fF775485246999027B3197955",
-            },
-            token1: {
-              name: "usdc",
-              decimal: 18,
-              address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-            },
-          },
-        },
-      },
-    },
-  },
+export const protocols: Protocols = {
   "137": {
     v2: {
       "sushiswap-v2": {
@@ -327,8 +160,8 @@ export const protocols: Protocols = {
         pairs: {
           "wmatic-usdt": {
             fee: {
-              percent: "0.05",
-              value: 500,
+              percent: "0.3",
+              value: 3000,
             },
             name: "wmatic/usdt",
             address: "0xdb0101be2132408e65b30246aa662e4d6f49599c",
